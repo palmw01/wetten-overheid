@@ -6,38 +6,44 @@ description: Zoek een juridische term in de kernwetten (IW 1990, Leidraad Invord
 
 **Zoekterm:** `$ARGUMENTS`
 
-Voer onderstaande stappen strikt in volgorde uit.
+Voer onderstaande stappen strikt in volgorde uit. Wijk niet af van de voorgeschreven formats — consistentie tussen runs is een harde eis.
 
 ---
 
-## Stap 1 — Morfologische variantenlijst bepalen
+## Stap 1 — Morfologische variantenlijst (deterministisch)
 
-Bepaal vóór het zoeken alle grammaticale vormen van de zoekterm `$ARGUMENTS`. Stel minimaal de volgende varianten vast:
+Pas de volgende vaste regels toe op `$ARGUMENTS` om de zoekvariantenlijst samen te stellen. De lijst is altijd volledig bepaald door de regels — geen eigen aanvullingen.
 
-- Enkelvoud én meervoud
-- Werkwoordsvorm indien van toepassing (bijv. "beslag" → "beslagleggen", "beslaglegging")
-- Samenstellingen die in de invorderingspraktijk gangbaar zijn
+**Regel 1 — Enkelvoud/meervoud:**
 
-Voorbeelden:
+| Situatie | Actie |
+|----------|-------|
+| Term eindigt op `-en` en is een zelfstandig naamwoord | Voeg de stam toe (strip `-en`, pas eventuele klinkerverdubbeling of `-s`-omzetting terug) |
+| Term eindigt niet op `-en` | Voeg de `-en`-vorm toe; voeg ook de `-s`-vorm toe als gangbaar |
+| Term is al een stam | Voeg zowel `-en` als `-s`-meervoud toe indien beide bestaan |
 
-| Opgegeven term | Zoek ook op |
-|---------------|-------------|
-| termijnen | termijn |
-| termijn | termijnen |
-| uitstel | uitstellen, uitstel van betaling |
-| aansprakelijkheid | aansprakelijk, aansprakelijkheden |
+**Regel 2 — Samenstellingen:** voeg uitsluitend toe als de samenstelling een zelfstandige juridische term is die als zodanig in wetgeving voorkomt. Gebruik de tabel:
+
+| Stam | Vaste toevoeging |
+|------|-----------------|
+| termijn | termijnen, betalingstermijn, betalingstermijnen |
+| beslag | beslagen, beslaglegging |
+| uitstel | uitstel van betaling |
+| aansprakelijk | aansprakelijkheid, aansprakelijkheden |
 | dwangbevel | dwangbevelen |
-| beslag | beslagen, beslaglegging, beslagrecht |
-| kwijtschelding | kwijtschelden |
+| kwijtscheld | kwijtschelding, kwijtschelding van belasting |
+| verjaring | verjaringstermijn, verjaringstermijnen |
 | verrekening | verrekenen |
 
-Noteer de volledige variantenlijst voordat je gaat zoeken.
+**Regel 3 — Maximaal:** de variantenlijst bevat maximaal 4 termen. Kies de meest voorkomende als er meer dan 4 zouden ontstaan.
+
+Noteer de definitieve variantenlijst als: `[v1, v2, v3, ...]` en gebruik deze exact in alle volgende stappen.
 
 ---
 
 ## Stap 2 — Parallelle zoekoproepen via MCP
 
-Roep **gelijktijdig** `wettenbank_ophalen` aan voor alle vijf kernbronnen. Gebruik de primaire zoekterm `$ARGUMENTS` als `zoekterm`. Zoek **tegelijkertijd** ook op de morfologische varianten uit Stap 1 — combineer de resultaten per wet.
+Roep **gelijktijdig** `wettenbank_ophalen` aan voor alle vijf bronnen met de primaire zoekterm `$ARGUMENTS`. Herhaal direct daarna voor elke variant die de primaire zoekterm niet al dekt. Combineer alle unieke artikelen per bron.
 
 | Bron | BWB-id |
 |------|--------|
@@ -47,60 +53,58 @@ Roep **gelijktijdig** `wettenbank_ophalen` aan voor alle vijf kernbronnen. Gebru
 | AWR | `BWBR0002320` |
 | Awb | `BWBR0005537` |
 
-Als een bron 0 resultaten geeft op alle varianten, meld dit expliciet in het rapport met een verklaring (bijv. andere woordkeuze, uitdrukking via "datum" i.p.v. "termijn").
-
 Noteer per bron:
-- Geldigheidsdatum van de geraadpleegde versie (staat in het MCP-resultaat)
-- Alle artikelnummers / paragraafnummers met treffer
-- De **volledige letterlijke tekst** van elk gevonden artikel/paragraaf, inclusief alle leden en onderdelen
+- Geldigheidsdatum van de geraadpleegde versie (uit het MCP-resultaat — gebruik exact deze datum)
+- Alle gevonden artikelnummers (nog niet sorteren)
+- Volledige letterlijke tekst van elk gevonden artikel, inclusief alle leden en onderdelen
+
+Bij 0 resultaten op alle varianten: noteer "geen treffer" voor die bron en ga door.
 
 ---
 
 ## Stap 3 — Awb-toepasselijkheidscheck
 
-Wanneer in Stap 2 relevante Awb-bepalingen zijn gevonden: controleer altijd of de betreffende Awb-titel of afdeling van toepassing is op de invorderingspraktijk. Raadpleeg daarvoor **art. 1 lid 2 IW 1990**, dat bepaalde Awb-titels uitdrukkelijk uitsluit.
-
-Vermeld in §3.2 van het rapport welke Awb-bepalingen van toepassing zijn en welke zijn uitgesloten op grond van art. 1 lid 2 IW 1990.
+Stel vast welke Awb-titels zijn uitgesloten via art. 1 lid 2 IW 1990. Citeer art. 1 lid 2 letterlijk. Vermeld per gevonden Awb-artikel of de betreffende titel van toepassing is of uitgesloten.
 
 ---
 
-## Stap 4 — Kruisreferentie-analyse
+## Stap 4 — Kruisreferentie-inventarisatie
 
-Analyseer de gevonden artikelen op verwijzingen naar andere artikelen:
+Scan de in Stap 2 verkregen artikelteksten op expliciete verwijzingen. Neem uitsluitend verwijzingen op die **letterlijk in de tekst staan** als "artikel X" of "artikel X, lid Y" of "artikel X, onderdeel Y". Voeg geen verwijzingen toe op basis van eigen kennis.
 
-**Interne verwijzingen** (binnen dezelfde wet): de tekst is al beschikbaar uit Stap 2.
-
-**Externe verwijzingen** (naar een andere wet of bron): haal de volledige tekst op via `wettenbank_ophalen` voor zover deze inhoudelijk relevant zijn voor `$ARGUMENTS`. Beperk je tot verwijzingen die direct relevant zijn.
+Categoriseer elke gevonden verwijzing:
+- **Intern**: verwijzing naar een artikel binnen dezelfde bron — tekst al beschikbaar uit Stap 2
+- **Extern**: verwijzing naar een andere bron — haal de betreffende artikeltekst op via `wettenbank_ophalen`
 
 ---
 
 ## Stap 5 — Statistieken berekenen
 
-Bereken op basis van de letterlijke wetstekst uit Stap 2:
-- Aantal artikelen/paragrafen met treffer per bron
-- Aantal keer dat de zoekterm (en varianten) voorkomt per bron
-- Totaal over alle bronnen
-- Lijst van artikelnummers per bron
+Tel per bron:
+- **Aantal artikelen met treffer**: het aantal unieke artikelnummers uit Stap 2
+- **Aantal vermeldingen**: tel hoe vaak de zoekterm of een variant letterlijk voorkomt in alle gevonden artikelteksten samen per bron (exact tellen, geen schatting)
+- **Artikelnummers**: sorteer oplopend, numeriek (1, 2, 3…; bij letters na het nummer: 1, 2, 2a, 2b, 3…)
 
 ---
 
 ## Stap 6 — Rapport genereren en opslaan
 
-Genereer het volledige rapport conform het onderstaande format. Sla op als:
-
+Sla het rapport op als:
 ```
 analyses/$ARGUMENTS-[TIMESTAMP].md
 ```
+Haal de timestamp op via `date +%Y-%m-%d_%H-%M-%S`.
 
-waarbij `[TIMESTAMP]` de huidige datum en tijd is in het formaat `YYYY-MM-DD_HH-MM-SS`. Haal de actuele tijd op met `date +%Y-%m-%d_%H-%M-%S` via Bash.
+Genereer het rapport strikt conform het format hieronder. Elk veld is verplicht. Gebruik exact de voorgeschreven koppen en tabelstructuren.
 
 ---
 
-## Rapportformat
+## Rapportformat (elk veld verplicht, volgorde onwijzigbaar)
 
 ```markdown
 ---
 zoekterm: "$ARGUMENTS"
+varianten: [[v1], [v2], [v3], …]
 datum: [YYYY-MM-DD]
 timestamp: [YYYY-MM-DD_HH-MM-SS]
 wetten:
@@ -116,14 +120,14 @@ wetten:
 **Datum:** [DATUM]
 **Doorzochte bronnen:** Invorderingswet 1990 · Leidraad Invordering 2008 · Uitvoeringsbesluit IW 1990 · AWR · Awb
 **Peildatum wetgeving:** IW 1990: [datum] | Leidraad: [datum] | UB IW 1990: [datum] | AWR: [datum] | Awb: [datum]
-**Gezochte varianten:** [zoekterm], [variant1], [variant2], …
+**Gezochte varianten:** [v1], [v2], [v3], …
 
 ---
 
 ## 1. Statistieken
 
-| Bron | Artikelen met treffer | Geschat aantal vermeldingen | Artikelnummers |
-|------|-----------------------|-----------------------------|----------------|
+| Bron | Artikelen met treffer | Aantal vermeldingen | Artikelnummers (oplopend) |
+|------|-----------------------|---------------------|---------------------------|
 | IW 1990 | [n] | [n] | art. X, Y, Z |
 | Leidraad Invordering | [n] | [n] | art. X, Y, Z |
 | UB IW 1990 | [n] | [n] | art. X, Y, Z |
@@ -135,63 +139,67 @@ wetten:
 
 ## 2. Vindplaatsen per bron
 
+[Volgorde van secties altijd: 2.1 IW 1990 → 2.2 Leidraad → 2.3 UB IW 1990 → 2.4 AWR → 2.5 Awb]
+[Artikelen binnen elke sectie altijd oplopend gesorteerd op artikelnummer]
+
 ### 2.1 Invorderingswet 1990 (BWBR0004770)
 
-> *[Naam van het hoofdstuk/de afdeling]*
+> *[Naam van het hoofdstuk en de afdeling, letterlijk uit de wetstekst]*
 
 #### Artikel [X] (IW 1990)
 
-> [Volledige letterlijke wetstekst van het artikel, inclusief alle leden en onderdelen]
+> [Volledige letterlijke wetstekst, inclusief alle leden en onderdelen]
 
-**Relevantie:** [1-2 zinnen: waarom is dit artikel relevant voor de zoekterm, wat regelt het concreet]
+**Vindplaats zoekterm:** De term "[zoekterm of variant]" komt voor in [lid X / onderdeel Y].
+**Rechtsgevolg:** [Één zin: wat is het directe rechtsgevolg van dit artikel voor de betalingsplicht of invorderingsbevoegdheid.]
 
 ---
-
-[Herhaal voor elk gevonden artikel]
 
 ### 2.2 Leidraad Invordering 2008 (BWBR0004800)
 
-> *[Onderdeel / paragraaf van de Leidraad]*
-
-#### Artikel [X] Leidraad
-
-> [Volledige letterlijke tekst]
-
-**Relevantie:** [1-2 zinnen]
-
----
-
-[Herhaal; als geen resultaat: meld expliciet welke varianten zijn gezocht en dat er geen treffer was]
+[Zelfde structuur. Bij geen treffer: schrijf exact: "Geen treffer voor varianten [v1, v2, …]. De Leidraad gebruikt voor dit begrip mogelijk een andere term."]
 
 ### 2.3 Uitvoeringsbesluit IW 1990 (BWBR0004772)
 
-[idem]
+[Zelfde structuur. Bij geen treffer: zelfde standaardmelding.]
 
 ### 2.4 Algemene wet inzake rijksbelastingen (BWBR0002320)
 
-[idem]
+[Zelfde structuur.]
 
 ### 2.5 Algemene wet bestuursrecht (BWBR0005537)
 
-[idem; vermeld ook de uitkomst van de Awb-toepasselijkheidscheck uit Stap 3]
+[Zelfde structuur, plus:]
+
+**Awb-toepasselijkheid (art. 1 lid 2 IW 1990):**
+
+> [Letterlijk citaat van art. 1 lid 2 IW 1990]
+
+| Awb-titel / afdeling | Gevonden artikel | Van toepassing? |
+|----------------------|------------------|-----------------|
+| [Titel X.Y] | Art. [X:Y] | Ja / Nee — [reden] |
 
 ---
 
 ## 3. Kruisreferenties
 
+[Alleen expliciete verwijzingen die letterlijk in de artikeltekst staan. Geen aanvullingen op basis van eigen kennis.]
+
 ### 3.1 Interne verwijzingen
 
-| Artikel (bron) | Verwijst naar | Onderwerp |
-|----------------|---------------|-----------|
-| Art. X lid Y IW | Art. Z IW | [onderwerp van de verwijzing] |
+| Artikel (bron) | Verwijst naar | Letterlijke verwijzingstekst |
+|----------------|---------------|------------------------------|
+| Art. X lid Y [wet] | Art. Z [wet] | "[exacte formulering uit de tekst]" |
 
-### 3.2 Externe verwijzingen en Awb-toepasselijkheid
+[Bij geen interne verwijzingen: "Geen interne verwijzingen gevonden in de artikelteksten."]
 
-| Artikel (bron) | Verwijst naar | Wet | Geciteerde tekst |
-|----------------|---------------|-----|-----------------|
-| Art. X IW | Art. Y AWR | AWR | "[letterlijke tekst van het gerefereerde lid]" |
+### 3.2 Externe verwijzingen
 
-*Awb-toepasselijkheid: [welke Awb-titels zijn van toepassing op grond van art. 1 lid 2 IW 1990, welke zijn uitgesloten]*
+| Artikel (bron) | Verwijst naar | Wet | Letterlijke verwijzingstekst | Geciteerde doeltekst |
+|----------------|---------------|-----|------------------------------|----------------------|
+| Art. X [wet] | Art. Y [wet] | [wet] | "[exacte formulering]" | "[letterlijke tekst van het gerefereerde lid]" |
+
+[Bij geen externe verwijzingen: "Geen externe verwijzingen gevonden in de artikelteksten."]
 
 ---
 
@@ -199,23 +207,51 @@ wetten:
 
 ### 4.1 Betekenis en gebruik van de term
 
-[2-4 alinea's: juridische betekenis, hoe de term wordt gebruikt in wet en Leidraad, onderscheid in betekenissen indien van toepassing. Altijd gebaseerd op de letterlijk geciteerde tekst uit §2.]
+Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke alinea:
+
+1. **Primaire betekenis in de IW 1990:** Wat regelt de IW 1990 specifiek met betrekking tot "[zoekterm]"? Baseer dit uitsluitend op de in §2 geciteerde wetstekst.
+2. **Meerdere betekenissen:** Wordt de term in de gevonden artikelen in meer dan één juridische betekenis gebruikt? Zo ja: benoem elke betekenis en de vindplaats. Zo nee: schrijf "De term wordt in de gevonden artikelen in één betekenis gebruikt."
+3. **Verhouding IW 1990 – AWR – Awb:** Hoe verhoudt het gebruik in de IW 1990 zich tot het gebruik in de AWR en de Awb op basis van de gevonden artikelen?
 
 ### 4.2 Samenhang tussen de bronnen
 
-[Beschrijf de hiërarchie: wet (IW 1990) → uitvoeringsbesluit (UB IW) → beleid (Leidraad). Hoe verhoudt de AWR zich als aanvullend kader? Welke Awb-titels zijn onverkort van toepassing? Welke wet is lex specialis?]
+Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke alinea:
+
+1. **Lex specialis:** Welke bron bevat de primaire normstelling voor "[zoekterm]" en waarom is die lex specialis ten opzichte van de andere bronnen?
+2. **Leidraad als beleidskader:** Hoe vult de Leidraad Invordering de wettelijke bepalingen aan? Verwijs naar het specifieke Leidraad-artikel uit §2. Bij geen treffer: "De Leidraad bevat geen bepalingen met de zoekterm; raadpleeg de Leidraad op aanverwante termen."
+3. **Awb-toepasselijkheid:** Welke Awb-titels zijn op grond van art. 1 lid 2 IW 1990 van toepassing en welke zijn uitgesloten? Verwijs naar de tabel in §2.5.
 
 ### 4.3 Spanningsvelden
 
-[Benoem expliciet: conflicten tussen bepalingen, spanning met algemene beginselen (rechtszekerheid, evenredigheid, vertrouwensbeginsel), onduidelijkheden of meerduidigheid. Indien geen spanningsvelden: meld dit expliciet.]
+Gebruik uitsluitend de in §2 gevonden wetstekst als grondslag. Vul de tabel in voor elk geconstateerd spanningsveld. Bij geen spanningsvelden: schrijf de standaardzin exact als: "Op basis van de gevonden artikelen zijn geen spanningsvelden geconstateerd."
+
+| Nr | Spanning | Betrokken artikelen | Type |
+|----|---------|---------------------|------|
+| 1 | [omschrijving] | Art. X [wet] – Art. Y [wet] | Onduidelijk / Meerduidig / Conflicterend |
 
 ### 4.4 Aandachtspunten voor de praktijk
 
-[Geef 2-5 genummerde aandachtspunten die direct relevant zijn voor de invorderingspraktijk bij de Belastingdienst. Houd rekening met de positie van de ontvanger, de belastingschuldige en eventuele aansprakelijkgestelden. Betrek de Leidraad Invordering als beleidskader.]
+Geef **precies 3** genummerde aandachtspunten. Elk aandachtspunt heeft exact de volgende structuur:
+
+**[Nr]. [Titel van het aandachtspunt]**
+*Vindplaats:* Art. X, lid Y [wet]
+*Gevolg voor de praktijk:* [Één zin over wat de ontvanger of belastingschuldige moet doen of nalaten.]
 
 ### 4.5 Relevante jurisprudentie en beleid
 
-[Indien bekend: verwijs naar bekende arresten of beleidsstandpunten. Markeer met *"Verificatie vereist"* als je niet zeker bent van de vindplaats. Verzin geen arresten of ECLI-nummers. Verwijs bij beleid altijd naar het specifieke artikel van de Leidraad Invordering.]
+Neem uitsluitend op:
+- Verwijzingen naar Leidraad-artikelen die in §2 zijn gevonden
+- Arresten die algemeen bekend zijn in het invorderingsrecht en direct betrekking hebben op de gevonden artikelen
+
+Gebruik voor elk item exact dit format:
+
+**[Naam / omschrijving]**
+*Vindplaats:* [Leidraad art. X / HR [datum] / anders]
+*Relevantie:* [Één zin.]
+*Status:* Geverifieerd / **Verificatie vereist**
+
+Sluit altijd af met deze vaste zin:
+"Voor actuele jurisprudentie wordt raadpleging van rechtspraak.nl en de Leidraad Invordering (actuele versie) aanbevolen."
 
 ---
 
@@ -223,22 +259,26 @@ wetten:
 
 | Bron | BWB-id | Geraadpleegde versie | Vindplaats |
 |------|--------|----------------------|------------|
-| Invorderingswet 1990 | BWBR0004770 | [datum] | wetten.overheid.nl |
-| Leidraad Invordering 2008 | BWBR0004800 | [datum] | wetten.overheid.nl |
-| UB IW 1990 | BWBR0004772 | [datum] | wetten.overheid.nl |
-| AWR | BWBR0002320 | [datum] | wetten.overheid.nl |
-| Awb | BWBR0005537 | [datum] | wetten.overheid.nl |
+| Invorderingswet 1990 | BWBR0004770 | [peildatum uit MCP] | wetten.overheid.nl |
+| Leidraad Invordering 2008 | BWBR0004800 | [peildatum uit MCP] | wetten.overheid.nl |
+| UB IW 1990 | BWBR0004772 | [peildatum uit MCP] | wetten.overheid.nl |
+| AWR | BWBR0002320 | [peildatum uit MCP] | wetten.overheid.nl |
+| Awb | BWBR0005537 | [peildatum uit MCP] | wetten.overheid.nl |
 ```
 
 ---
 
 ## Kwaliteitseisen (niet-onderhandelbaar)
 
-- **Nooit parafraseren.** Citeer wetstekst en Leidraad altijd letterlijk en volledig, inclusief alle leden en onderdelen. Eigen samenvatting van een artikel is verboden.
-- **Vijf bronnen doorzoeken.** Altijd IW 1990, Leidraad Invordering, UB IW 1990, AWR én Awb — ook als de verwachting is dat een bron niets oplevert.
-- **Morfologische volledigheid.** Zoek parallel op alle varianten (enkelvoud, meervoud, samenstellingen). Vermeld alle gebruikte varianten in de rapport-header.
-- **Peildatum altijd vermelden.** Geldigheidsdatum per bron opnemen in de header.
-- **Awb-toepasselijkheidscheck.** Controleer altijd art. 1 lid 2 IW 1990 bij relevante Awb-bevindingen.
-- **Nulresultaten expliciet melden.** Schrijf bij elke bron zonder treffer welke varianten zijn geprobeerd en wat de mogelijke verklaring is.
-- **Nooit arresten verzinnen.** Bij twijfel over vindplaats: "Verificatie vereist". Geen ECLI-nummers fabriceren.
-- **Altijd opslaan.** Rapport als MD-bestand in `analyses/`, ook bij weinig resultaten.
+- **Nooit parafraseren.** Wetstekst altijd letterlijk en volledig citeren.
+- **Vijf bronnen altijd doorzoeken.** Ook als de verwachting is dat een bron niets oplevert.
+- **Artikelvolgorde altijd oplopend.** Binnen elke bron: numeriek oplopend op artikelnummer.
+- **Vermeldingen exact tellen.** Geen schattingen; tel het werkelijke aantal keren dat de zoekterm of variant voorkomt in de opgehaalde tekst.
+- **Kruisreferenties alleen uit de tekst.** Geen verwijzingen toevoegen op basis van eigen kennis.
+- **Samenvatting via vaste vragen.** Beantwoord de vragen in §4.1 t/m §4.4 in de voorgeschreven volgorde en structuur.
+- **Precies 3 aandachtspunten.** Niet meer, niet minder; elk met vindplaats en praktijkgevolg.
+- **Jurisprudentie altijd met status.** Elk item heeft "Geverifieerd" of "Verificatie vereist"; nooit ECLI-nummers fabriceren.
+- **Standaardzin jurisprudentie altijd sluiten.** De vaste slotalinea is verplicht.
+- **Nulresultaten standaardmelding.** Gebruik exact de voorgeschreven tekst bij geen treffer.
+- **Peildatum uit MCP.** Gebruik de datum die het MCP-resultaat teruggeeft, niet de datum van vandaag.
+- **Altijd opslaan.** Rapport als MD-bestand in `analyses/`.
