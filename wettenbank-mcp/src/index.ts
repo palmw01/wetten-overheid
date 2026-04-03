@@ -20,6 +20,10 @@ const REPO_BASE = "https://repository.officiele-overheidspublicaties.nl/bwb";
 // Bekende BWB-ids van kernwetten invordering — gebruikt in fout- en helpberichten
 const KERNWET_IDS = `IW 1990 → \`BWBR0004770\` | AWR → \`BWBR0002320\` | Awb → \`BWBR0005537\``;
 
+function vandaag(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
@@ -178,8 +182,11 @@ interface ArtikelMatch {
 // artikel en circulaire.divisie worden gecontroleerd én doorzocht (voor geneste artikelen).
 function zoekArtikelInDom(
   node: Record<string, unknown>,
-  artikelnummer: string
+  artikelnummer: string,
+  depth = 0
 ): ArtikelMatch | null {
+  // Voorkom stack overflow bij extreem geneste of malformed XML
+  if (depth > 30) return null;
   for (const key of ["artikel", "circulaire.divisie"] as const) {
     const items = node[key] as Record<string, unknown>[] | undefined;
     if (!Array.isArray(items)) continue;
@@ -188,7 +195,7 @@ function zoekArtikelInDom(
       if (kop && getNrValue(kop.nr) === artikelnummer) {
         return { type: key, node: item };
       }
-      const found = zoekArtikelInDom(item, artikelnummer);
+      const found = zoekArtikelInDom(item, artikelnummer, depth + 1);
       if (found) return found;
     }
   }
@@ -203,7 +210,7 @@ function zoekArtikelInDom(
       ? (val as Record<string, unknown>[])
       : [val as Record<string, unknown>];
     for (const child of list) {
-      const found = zoekArtikelInDom(child, artikelnummer);
+      const found = zoekArtikelInDom(child, artikelnummer, depth + 1);
       if (found) return found;
     }
   }
@@ -317,7 +324,7 @@ export async function haalWetstekstOp(
   bwbId: string,
   peildatum?: string
 ): Promise<{ formatted: string; inhoud: string; rawXml: string }> {
-  const datum = peildatum ?? new Date().toISOString().slice(0, 10);
+  const datum = peildatum ?? vandaag();
   const xml = await sruRequest(`dcterms.identifier==${bwbId} and overheidbwb.geldigheidsdatum==${datum}`, 1);
   const lijst = parseRecords(xml);
   if (!lijst.length) {
@@ -356,6 +363,29 @@ export async function haalWetstekstOp(
   ].join("\n");
 
   return { formatted, inhoud: inhoud || "", rawXml };
+}
+
+// ── Hulpfuncties tool-handlers ───────────────────────────────────────────────
+
+// Formatteert een lijst van regex-matches als geciteerde fragmenten met artikelcontext.
+// Pre-bouwt artikel-posities eenmalig (O(n)) zodat elke lookup O(k) is over het
+// artikel-posities-array in plaats van O(n) over de volledige tekst per match.
+function formatFragmenten(
+  matches: RegExpMatchArray[],
+  tekst: string,
+  maxAantal = 10
+): string {
+  const artikelPos = [...tekst.matchAll(/Artikel\s+\d+[a-z]*/gi)]
+    .map(m => ({ index: m.index!, tekst: m[0] }));
+  return matches.slice(0, maxAantal).map(m => {
+    let ctx = "";
+    for (const ap of artikelPos) {
+      if (ap.index > m.index!) break;
+      ctx = ap.tekst;
+    }
+    const prefix = ctx ? `**[${ctx}]** ` : "";
+    return `> ${prefix}…${m[0].trim()}…`;
+  }).join("\n\n");
 }
 
 // ── Server ───────────────────────────────────────────────────────────────────
@@ -450,10 +480,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Twee-staps zoeken: wet zoeken op titel, dan trefwoord in de wetstekst
       if (titel && trefwoord) {
-        const vandaag = new Date().toISOString().slice(0, 10);
         const titelDelen: string[] = [
           `overheidbwb.titel any "${titel}"`,
-          `overheidbwb.geldigheidsdatum==${vandaag}`,
+          `overheidbwb.geldigheidsdatum==${vandaag()}`,
         ];
         if (rechtsgebied) titelDelen.push(`overheidbwb.rechtsgebied == "${rechtsgebied}"`);
         if (ministerie) titelDelen.push(`overheid.authority == "${ministerie}"`);
@@ -478,11 +507,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const tekst = stripXml(await resp.text());
             const matches = Array.from(tekst.matchAll(new RegExp(`.{0,100}${escapedTerm}.{0,100}`, "gi")));
             const aantalLabel = matches.length ? `**${matches.length}x** gevonden` : "**niet gevonden**";
-            const fragmenten = matches.slice(0, 10).map(m => {
-              const artikel = vindArtikelContext(tekst, m.index!);
-              const prefix = artikel ? `**[${artikel}]** ` : "";
-              return `> ${prefix}…${m[0].trim()}…`;
-            }).join("\n\n");
+            const fragmenten = formatFragmenten(matches, tekst);
             resultaten.push(
               `### ${r.titel}\nBWB-id: \`${r.bwbId}\` | "${trefwoord}" ${aantalLabel}\n\n${fragmenten || ""}`
             );
@@ -530,12 +555,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { bwbId, peildatum, artikel, zoekterm } = args as Record<string, string>;
       const { formatted, inhoud, rawXml } = await haalWetstekstOp(bwbId, peildatum);
 
+      const header = formatted.split("\n---\n")[0];
+
       // Artikel-extractie: haal één specifiek artikel op
       if (artikel) {
         // Probeer eerst XML-gebaseerde extractie (betrouwbaarder: geen valse splits op kruisverwijzingen)
         const artikelTekst = (rawXml ? extraheerArtikelUitXml(rawXml, artikel) : null) ?? extraheerArtikel(inhoud, artikel);
         if (artikelTekst) {
-          const header = formatted.split("\n---\n")[0]; // alleen de metadata-header
           return {
             content: [{
               type: "text",
@@ -546,7 +572,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{
             type: "text",
-            text: `${formatted.split("\n---\n")[0]}\n\n---\n\nArtikel ${artikel} niet gevonden in deze wet.`,
+            text: `${header}\n\n---\n\nArtikel ${artikel} niet gevonden in deze wet.`,
           }],
         };
       }
@@ -556,12 +582,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const escaped = escapeerRegex(zoekterm);
         const matches = Array.from(inhoud.matchAll(new RegExp(`.{0,150}${escaped}.{0,150}`, "gi")));
         const samenvatting = matches.length
-          ? `"${zoekterm}" komt **${matches.length}x** voor:\n\n` +
-            matches.slice(0, 10).map(m => {
-              const ctx = vindArtikelContext(inhoud, m.index!);
-              const prefix = ctx ? `**[${ctx}]** ` : "";
-              return `> ${prefix}…${m[0].trim()}…`;
-            }).join("\n\n")
+          ? `"${zoekterm}" komt **${matches.length}x** voor:\n\n${formatFragmenten(matches, inhoud)}`
           : `"${zoekterm}" **niet gevonden** in deze wet.`;
         return {
           content: [{

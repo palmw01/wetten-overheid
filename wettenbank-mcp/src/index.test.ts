@@ -216,6 +216,16 @@ describe("extraheerArtikelUitXml", () => {
     expect(extraheerArtikelUitXml("", "2")).toBeNull();
   });
 
+  it("retourneert null bij extreem geneste XML (depth-limit)", () => {
+    // Bouw een XML met 35 geneste <hoofdstuk>-niveaus — voorbij de limiet van 30
+    const diepNest = (n: number): string =>
+      n === 0
+        ? `<artikel status="geldend"><kop><label>Artikel</label><nr>99</nr></kop><al>Diep artikel.</al></artikel>`
+        : `<hoofdstuk><${n > 1 ? "hoofdstuk" : "artikel"}>${diepNest(n - 1)}</${n > 1 ? "hoofdstuk" : "artikel"}></hoofdstuk>`;
+    const xml = `<wetgeving><wettekst>${diepNest(35)}</wettekst></wetgeving>`;
+    expect(extraheerArtikelUitXml(xml, "99")).toBeNull();
+  });
+
   // Leidraad Invordering 2008 gebruikt <circulaire.divisie> als wrapper (geen <artikel>)
   const leidraadXml = `<?xml version="1.0"?>
 <circulaire>
