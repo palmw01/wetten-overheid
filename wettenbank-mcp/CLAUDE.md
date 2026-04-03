@@ -47,6 +47,22 @@ Optionele parameter `artikel`: geeft uitsluitend het gevraagde artikel terug (bi
 
 Optionele parameter `zoekterm`: na het ophalen van de wetstekst worden alle vindplaatsen (max. 10 fragmenten van ±150 tekens context) teruggegeven.
 
+### XML-schemas als ontwerpbasis
+
+De server laadt geen XSD's op en valideert er niet mee, maar twee publieke schemas van `repository.officiele-overheidspublicaties.nl` vormen de stille blauwdruk achter de parselogica:
+
+**`BWB-toestand/2016-1` (`toestand_2016-1.xsd`)** — beschrijft de XML-structuur van wetsdocumenten die het repository serveert. Hierop is gebaseerd:
+- De `isArray`-lijst in `wetParser`: elementen met `maxOccurs="unbounded"` in de XSD (`artikel`, `lid`, `li`, `circulaire.divisie`, enz.) moeten als array worden geparsed, anders breekt de DOM-traversal bij enkelvoudige kinderen.
+- De structurele containers in `zoekArtikelInDom`: `boek`, `deel`, `hoofdstuk`, `afdeling`, `paragraaf`, `wettekst`, `wetgeving` zijn XSD-elementnamen.
+- De veldnamen in `formateerArtikelNode`: `kop`, `nr`, `al`, `lid`, `lidnr`, `lijst`, `li`, `tekst`.
+
+**`BWB-WTI/2016-1` (`wti_2016-1.xsd`)** — beschrijft de recordstructuur die de SRU-zoekdienst teruggeeft. De padnamen in `parseRecords()` zijn WTI-XSD-elementen en namespaces:
+```
+gzd → originalData → overheidbwb:meta → owmskern (dcterms:*, overheid:*)
+                                       → bwbipm (overheidbwb:*)
+      enrichedData → overheidbwb:locatie_toestand
+```
+
 **Communication:** StdIO — Claude Desktop launches the server as a subprocess and exchanges JSON over stdin/stdout via `StdioServerTransport`.
 
 ## Deployment
