@@ -24,7 +24,7 @@ The entire server lives in `src/index.ts`. It exposes three tools:
 | Tool | Purpose |
 |------|---------|
 | `wettenbank_zoek` | Search by title, rechtsgebied, ministerie, or regelingsoort; two-step full-text search when both `titel` and `trefwoord` are given |
-| `wettenbank_ophalen` | Fetch full text of a regulation by BWB-id; optional `zoekterm` to find occurrences within the text |
+| `wettenbank_ophalen` | Fetch full text of a regulation by BWB-id; optional `artikel` to fetch one specific article directly (bypasses 50KB limit), optional `zoekterm` to find occurrences within the text |
 | `wettenbank_wijzigingen` | List regulations changed since a given date |
 
 **Data flow:** Claude calls a tool → tool handler builds a CQL query → `sruRequest()` hits the SRU endpoint → XML parsed with `fast-xml-parser` → `parseRecords()` extracts `Regeling` objects → formatted as markdown and returned to Claude.
@@ -41,7 +41,9 @@ For `wettenbank_ophalen`, there's an extra step: after finding the regulation vi
 
 > **Let op:** gebruik `titel` + `trefwoord` nooit samen als enkelvoudige CQL-query — dit was een bug die een ongeldige query en HTTP 500 veroorzaakte. De twee-staps aanpak omzeilt dit correct.
 
-### `wettenbank_ophalen` — zoekterm
+### `wettenbank_ophalen` — artikel en zoekterm
+
+Optionele parameter `artikel`: geeft uitsluitend het gevraagde artikel terug (bijv. `"3:40"` voor Awb, `"25"` voor IW 1990). Efficiënter dan de volledige wet ophalen en werkt ook voor artikelen voorbij de 50KB-grens.
 
 Optionele parameter `zoekterm`: na het ophalen van de wetstekst worden alle vindplaatsen (max. 10 fragmenten van ±150 tekens context) teruggegeven.
 

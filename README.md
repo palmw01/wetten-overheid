@@ -23,7 +23,7 @@ De [`wettenbank-mcp`](./wettenbank-mcp/) server stelt drie tools beschikbaar voo
 | Tool | Omschrijving |
 |------|-------------|
 | `wettenbank_zoek` | Zoek op titel, rechtsgebied, ministerie of regelingsoort |
-| `wettenbank_ophalen` | Volledige wetstekst via BWB-id (optioneel: historische versie en zoekterm) |
+| `wettenbank_ophalen` | Volledige wetstekst via BWB-id; optioneel: `artikel` (direct één artikel ophalen), `zoekterm` (vindplaatsen), `peildatum` (historische versie) |
 | `wettenbank_wijzigingen` | Gewijzigde regelingen sinds datum X |
 
 **Geen API-sleutel nodig.** De server koppelt direct aan de publieke SRU-interface van KOOP; alle data is CC-0.
@@ -67,7 +67,7 @@ Het slash-commando `/wetzoek` doorzoekt automatisch vijf kernbronnen en genereer
 | Bron | BWB-id |
 |------|--------|
 | Invorderingswet 1990 | `BWBR0004770` |
-| Leidraad Invordering 2008 | `BWBR0004800` |
+| Leidraad Invordering 2008 | `BWBR0024096` |
 | Uitvoeringsbesluit Invorderingswet 1990 | `BWBR0004772` |
 | Algemene wet inzake rijksbelastingen (AWR) | `BWBR0002320` |
 | Algemene wet bestuursrecht (Awb) | `BWBR0005537` |

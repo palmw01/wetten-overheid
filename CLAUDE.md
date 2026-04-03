@@ -47,18 +47,73 @@ Bij het annoteren van wetsteksten gebruik je altijd het **Juridisch Analyseschem
 
 **Correcte werkwijze:**
 1. Begrip zoeken in een wet → `wettenbank_ophalen(bwbId=<id>, zoekterm=<begrip>)`
-2. Onbekend BWB-id opzoeken → `wettenbank_zoek(titel=<naam>, regelingsoort=wet)`
-3. **Altijd morfologische varianten meenemen**: zoek op enkelvoud én meervoud (bijv. "termijn" en "termijnen"). Als de primaire zoekterm 0 resultaten geeft, herhaal dan direct met de andere woordvorm.
+2. Specifiek artikel ophalen → `wettenbank_ophalen(bwbId=<id>, artikel=<nr>)` — geeft alleen dat artikel terug; werkt ook voor grote wetten zoals de Awb
+3. Onbekend BWB-id opzoeken → `wettenbank_zoek(titel=<naam>, regelingsoort=wet)`
+4. **Altijd morfologische varianten meenemen**: zoek op enkelvoud én meervoud (bijv. "termijn" en "termijnen"). Als de primaire zoekterm 0 resultaten geeft, herhaal dan direct met de andere woordvorm.
 
 **BWB-ids kernbronnen:**
 
-| Bron | BWB-id |
-|------|--------|
-| Invorderingswet 1990 | `BWBR0004770` |
-| Leidraad Invordering 2008 | `BWBR0004800` |
-| Uitvoeringsbesluit Invorderingswet 1990 | `BWBR0004772` |
-| AWR | `BWBR0002320` |
-| Awb | `BWBR0005537` |
+| Bron | BWB-id | Beschikbaar via MCP? |
+|------|--------|----------------------|
+| Invorderingswet 1990 | `BWBR0004770` | Ja |
+| Uitvoeringsbesluit Invorderingswet 1990 | `BWBR0004772` | Ja |
+| AWR | `BWBR0002320` | Ja |
+| Awb | `BWBR0005537` | Ja |
+| Leidraad Invordering 2008 | `BWBR0024096` | **Ja** |
+
+**Leidraad Invordering 2008 — BWB-id BWBR0024096**
+
+De Leidraad Invordering 2008 is beschikbaar via MCP onder BWB-id `BWBR0024096` (type: beleidsregel, geldig 2026-01-01 – 9999-12-31). Gebruik altijd dit id. BWB-id `BWBR0004800` verwijst naar de *Leidraad invordering 1990* (circulaire, verlopen per 2005-07-12) — gebruik dit id nooit.
+
+---
+
+## MCP wettenbank — structurele beperkingen en extractieprocedure
+
+**`wettenbank_ophalen` retourneert maximaal ~50KB van de wet**
+
+De MCP-tool retourneert de wettekst als JSON-bestand op één regel, maar is beperkt tot ~50KB. De Read tool en Grep kunnen dit niet verwerken. De 2KB-preview is **niet** bruikbaar als bron — die toont toevallig alleen het begin van de wet en is geen betrouwbare methode.
+
+**Vervallen artikelen worden gefilterd door MCP**
+
+De MCP retourneert alleen geldende (niet-vervallen) artikelen. Vervallen artikelen worden uit de tekst weggelaten en tellen ook niet mee voor de 50KB-limiet. Dit verklaart gaten in de nummering: bijv. in de Awb zijn artt. 3:30–3:39 vervallen, waarna art. 3:40 het eerstvolgende geldende artikel is.
+
+**Awb en grote wetten — gebruik de `artikel`-parameter**
+
+De Awb (BWBR0005537) is te groot voor de 50KB-limiet bij een volledige opvraging. Gebruik voor Awb-artikelen (ook hfst. 4-10) altijd de `artikel`-parameter: `wettenbank_ophalen(bwbId="BWBR0005537", artikel="3:40")`. De MCP haalt dan uitsluitend dat artikel op, ongeacht de positie in de wet. Dit geldt ook voor andere grote wetten.
+
+**Twee strategieën afhankelijk van het aantal benodigde artikelen**
+
+- **Één artikel nodig** → gebruik `wettenbank_ophalen(bwbId=<id>, artikel=<nr>)`: directe opvraging, geen nabewerking nodig.
+- **Meerdere artikelen uit dezelfde wet** → gebruik `wettenbank_ophalen(bwbId=<id>)` zonder `artikel`-parameter en extraheer via Bash. Één call volstaat; meerdere calls naar dezelfde wet zijn overbodig.
+
+**Standaard extractiecommando (voor multi-artikel opvraging via Bash)**
+
+Alleen nodig als de volledige wet is opgehaald (zonder `artikel`-parameter). Nooit de preview gebruiken als artikelbron.
+
+```bash
+python3 -c "
+import json, re
+def extraheer_artikel(jsonfile, artikel):
+    with open(jsonfile) as f:
+        text = json.load(f)[0]['text']
+    parts = re.split(r'(?=Artikel \d)', text)
+    result = next((p for p in parts if re.match(rf'Artikel {re.escape(str(artikel))}[ \t]', p)), None)
+    if not result:
+        return f'Artikel {artikel} niet gevonden'
+    clean = re.sub(r'\s*\d{4}\s+\d+\s+\d{2}-\d{2}-\d{4}.*', '', result, flags=re.DOTALL)
+    return clean.strip()
+
+print(extraheer_artikel('PAD_NAAR_JSON', 'ARTIKELNUMMER'))
+"
+```
+
+- `PAD_NAAR_JSON`: het pad uit de tool-result melding (`/home/willardp/.claude/.../tool-results/toolu_XXX.json`)
+- `ARTIKELNUMMER`: bijv. `"9"`, `"25"`, `"3:40"` (voor Awb), `"2a"`
+- Werkt voor alle wetten met dezelfde JSON-structuur (IW 1990, AWR, Awb, UB IW)
+
+**Bestaande annotaties hergebruiken (voor /jas)**
+
+Controleer vóór elke `/jas`-run of er al een annotatie bestaat in `analyses/` voor het gevraagde artikel en wet. Gebruik `Glob` met patroon `analyses/jas-annotatie-art[A]-*`. Als een bestaand rapport aanwezig is: lees dat rapport en gebruik de daarin geciteerde wetstekst. Start geen nieuwe MCP-aanroepen als de wetstekst al beschikbaar is.
 
 ---
 
@@ -92,7 +147,7 @@ Bij het uitvoeren van `/wetzoek` gelden de volgende verplichte standaarden, geba
 - Controleer bij relevante Awb-bevindingen altijd of de betreffende titel/afdeling van toepassing is via art. 1 lid 2 IW 1990. Meld de uitkomst in §3.2 van het rapport.
 
 **Leidraad Invordering als beleidsbron**
-- Doorzoek altijd de Leidraad Invordering (BWBR0004800) als vijfde bron. Citeer Leidraad-tekst letterlijk; parafraseren is ook hier verboden.
+- De Leidraad Invordering 2008 is beschikbaar via MCP onder `BWBR0024096`. Haal deze op via `wettenbank_ophalen(bwbId="BWBR0024096")` en extraheer het relevante artikel via Bash. De Leidraad is een beleidsregel (geen wet), maar bevat de invorderingspraktijk van de ontvanger en is een verplichte bron bij IW 1990- en UB IW-annotaties.
 
 **Nulresultaten**
 - Meld expliciet als een bron geen treffer geeft, welke varianten zijn geprobeerd en wat de mogelijke verklaring is.

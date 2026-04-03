@@ -48,7 +48,7 @@ Roep **gelijktijdig** `wettenbank_ophalen` aan voor alle vijf bronnen met de pri
 | Bron | BWB-id |
 |------|--------|
 | Invorderingswet 1990 | `BWBR0004770` |
-| Leidraad Invordering 2008 | `BWBR0004800` |
+| Leidraad Invordering 2008 | `BWBR0024096` |
 | Uitvoeringsbesluit Invorderingswet 1990 | `BWBR0004772` |
 | AWR | `BWBR0002320` |
 | Awb | `BWBR0005537` |
@@ -109,7 +109,7 @@ datum: [YYYY-MM-DD]
 timestamp: [YYYY-MM-DD_HH-MM-SS]
 wetten:
   - IW 1990 (BWBR0004770)
-  - Leidraad Invordering 2008 (BWBR0004800)
+  - Leidraad Invordering 2008 (BWBR0024096)
   - UB IW 1990 (BWBR0004772)
   - AWR (BWBR0002320)
   - Awb (BWBR0005537)
@@ -155,7 +155,7 @@ wetten:
 
 ---
 
-### 2.2 Leidraad Invordering 2008 (BWBR0004800)
+### 2.2 Leidraad Invordering 2008 (BWBR0024096)
 
 [Zelfde structuur. Bij geen treffer: schrijf exact: "Geen treffer voor varianten [v1, v2, …]. De Leidraad gebruikt voor dit begrip mogelijk een andere term."]
 
@@ -260,7 +260,7 @@ Sluit altijd af met deze vaste zin:
 | Bron | BWB-id | Geraadpleegde versie | Vindplaats |
 |------|--------|----------------------|------------|
 | Invorderingswet 1990 | BWBR0004770 | [peildatum uit MCP] | wetten.overheid.nl |
-| Leidraad Invordering 2008 | BWBR0004800 | [peildatum uit MCP] | wetten.overheid.nl |
+| Leidraad Invordering 2008 | BWBR0024096 | [peildatum uit MCP] | wetten.overheid.nl |
 | UB IW 1990 | BWBR0004772 | [peildatum uit MCP] | wetten.overheid.nl |
 | AWR | BWBR0002320 | [peildatum uit MCP] | wetten.overheid.nl |
 | Awb | BWBR0005537 | [peildatum uit MCP] | wetten.overheid.nl |

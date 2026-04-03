@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { stripXml, parseRecords, formatRegelingen, dedupliceerOpBwbId, haalWetstekstOp, sruRequest, vindArtikelContext } from "./index.js";
+import { escapeerRegex, stripXml, extraheerArtikel, extraheerArtikelUitXml, parseRecords, formatRegelingen, dedupliceerOpBwbId, haalWetstekstOp, sruRequest, vindArtikelContext } from "./index.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,6 +66,22 @@ function mockFetch(responses: Array<{ ok: boolean; text: string }>) {
   });
 }
 
+// ── escapeerRegex ────────────────────────────────────────────────────────────
+
+describe("escapeerRegex", () => {
+  it("escapet regex-speciale tekens", () => {
+    expect(escapeerRegex("3:40")).toBe("3:40");
+    expect(escapeerRegex("25.1")).toBe("25\\.1");
+    expect(escapeerRegex("a[b]")).toBe("a\\[b\\]");
+    expect(escapeerRegex("a+b")).toBe("a\\+b");
+  });
+
+  it("laat gewone tekst ongewijzigd", () => {
+    expect(escapeerRegex("25")).toBe("25");
+    expect(escapeerRegex("abc")).toBe("abc");
+  });
+});
+
 // ── stripXml ─────────────────────────────────────────────────────────────────
 
 describe("stripXml", () => {
@@ -102,9 +118,153 @@ describe("stripXml", () => {
     expect(stripXml("<a>een</a>   <b>twee</b>")).toBe("een twee");
   });
 
-  it("kapt af op 50 000 tekens", () => {
+  it("geeft volledige tekst terug zonder afkap", () => {
     const lang = "<x>" + "a".repeat(60000) + "</x>";
-    expect(stripXml(lang).length).toBe(50000);
+    expect(stripXml(lang).length).toBe(60000);
+  });
+});
+
+// ── extraheerArtikel ─────────────────────────────────────────────────────────
+
+describe("extraheerArtikel", () => {
+  const tekst = "Artikel 3:40 Een besluit treedt niet in werking voordat het is bekendgemaakt. Artikel 3:41 Iets anders.";
+
+  it("extraheert een artikel op nummer met dubbele punt", () => {
+    const result = extraheerArtikel(tekst, "3:40");
+    expect(result).toContain("Een besluit treedt niet in werking");
+    expect(result).not.toContain("Artikel 3:41");
+  });
+
+  it("retourneert null als artikel niet bestaat", () => {
+    expect(extraheerArtikel(tekst, "9:99")).toBeNull();
+  });
+
+  it("extraheert een artikel op enkelvoudig nummer", () => {
+    const tekst2 = "Artikel 25 De ontvanger int belastingen. Artikel 26 Andere bepaling.";
+    const result = extraheerArtikel(tekst2, "25");
+    expect(result).toContain("De ontvanger int belastingen");
+    expect(result).not.toContain("Artikel 26");
+  });
+
+  it("strips trailing publicatiemetadata", () => {
+    const met_meta = "Artikel 3:40 Een besluit treedt niet in werking. 1994 1 06-01-1994 rest";
+    const result = extraheerArtikel(met_meta, "3:40");
+    expect(result).not.toContain("1994 1 06-01-1994");
+  });
+});
+
+// ── extraheerArtikelUitXml ───────────────────────────────────────────────────
+
+describe("extraheerArtikelUitXml", () => {
+  // Representatieve XML-structuur zoals wetten.overheid.nl deze levert
+  const ubIwXml = `<?xml version="1.0"?>
+<wetgeving>
+  <wet-besluit>
+    <wettekst>
+      <artikel status="geldend">
+        <kop><label>Artikel</label><nr>1</nr></kop>
+        <al>Dit besluit geeft uitvoering aan de artikelen 15 en 28 van de wet.</al>
+      </artikel>
+      <artikel status="geldend">
+        <kop><label>Artikel</label><nr>2</nr></kop>
+        <al>Artikel 15, eerste lid, aanhef en onderdeel e, van de wet vindt toepassing:</al>
+        <lijst>
+          <li><li.nr>a.</li.nr><al>met betrekking tot een naheffingsaanslag;</al></li>
+          <li><li.nr>b.</li.nr><al>in situaties als bedoeld in artikel 10 van de wet.</al></li>
+        </lijst>
+      </artikel>
+      <artikel status="geldend">
+        <kop><label>Artikel</label><nr>3</nr></kop>
+        <al>Vervallen.</al>
+      </artikel>
+    </wettekst>
+  </wet-besluit>
+</wetgeving>`;
+
+  it("extraheert art. 2 correct ook als de body begint met 'Artikel 15, eerste lid'", () => {
+    const result = extraheerArtikelUitXml(ubIwXml, "2");
+    expect(result).toContain("Artikel 2");
+    expect(result).toContain("Artikel 15, eerste lid");
+    expect(result).toContain("naheffingsaanslag");
+    expect(result).not.toContain("Artikel 3");
+  });
+
+  it("extraheert art. 1 correct", () => {
+    const result = extraheerArtikelUitXml(ubIwXml, "1");
+    expect(result).toContain("Artikel 1");
+    expect(result).toContain("uitvoering aan de artikelen 15 en 28");
+    expect(result).not.toContain("Artikel 2");
+  });
+
+  it("retourneert null voor een niet-bestaand artikelnummer", () => {
+    expect(extraheerArtikelUitXml(ubIwXml, "99")).toBeNull();
+  });
+
+  it("extraheert Awb-artikel met dubbele punt (3:40)", () => {
+    const awbXml = `<wetgeving><wettekst>
+      <artikel status="geldend">
+        <kop><label>Artikel</label><nr>3:40</nr></kop>
+        <al>Een besluit treedt niet in werking voordat het is bekendgemaakt.</al>
+      </artikel>
+    </wettekst></wetgeving>`;
+    const result = extraheerArtikelUitXml(awbXml, "3:40");
+    expect(result).toContain("3:40");
+    expect(result).toContain("bekendgemaakt");
+  });
+
+  it("retourneert null bij lege XML", () => {
+    expect(extraheerArtikelUitXml("", "2")).toBeNull();
+  });
+
+  // Leidraad Invordering 2008 gebruikt <circulaire.divisie> als wrapper (geen <artikel>)
+  const leidraadXml = `<?xml version="1.0"?>
+<circulaire>
+  <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisie24" label="Artikel 24">
+    <kop><label>Artikel</label><nr status="officieel">24</nr><titel>Betalingstermijnen</titel></kop>
+    <tekst><al>In aansluiting op artikel 24 van de wet.</al></tekst>
+    <artikel label="Artikel 24.1">
+      <kop><label>Artikel</label><nr>24.1</nr></kop>
+      <al>Subartikel 24.1.</al>
+    </artikel>
+  </circulaire.divisie>
+  <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisie25" label="Artikel 25">
+    <kop><label>Artikel</label><nr status="officieel">25</nr><titel>Uitstel van betaling</titel></kop>
+    <tekst><al>In aansluiting op artikel 25 van de wet verleent de ontvanger uitstel.</al></tekst>
+    <artikel label="Artikel 25.1">
+      <kop><label>Artikel</label><nr>25.1</nr></kop>
+      <al>Subartikel 25.1.</al>
+    </artikel>
+  </circulaire.divisie>
+  <circulaire.divisie bwb-ng-variabel-deel="/Circulaire.divisie26" label="Artikel 26">
+    <kop><label>Artikel</label><nr status="officieel">26</nr><titel>Kwijtschelding</titel></kop>
+    <tekst><al>In aansluiting op artikel 26 van de wet.</al></tekst>
+  </circulaire.divisie>
+</circulaire>`;
+
+  it("extraheert Leidraad-artikel via <circulaire.divisie>", () => {
+    const result = extraheerArtikelUitXml(leidraadXml, "25");
+    expect(result).toContain("25");
+    expect(result).toContain("Uitstel van betaling");
+    expect(result).toContain("verleent de ontvanger uitstel");
+    expect(result).not.toContain("Kwijtschelding");
+    expect(result).not.toContain("Betalingstermijnen");
+  });
+
+  it("extraheert subartikel van Leidraad via <artikel> binnen <circulaire.divisie>", () => {
+    const result = extraheerArtikelUitXml(leidraadXml, "25.1");
+    expect(result).toContain("25.1");
+    expect(result).toContain("Subartikel 25.1");
+    expect(result).not.toContain("Uitstel van betaling");
+  });
+
+  it("extraheert eerste Leidraad-artikel correct (art. 24)", () => {
+    const result = extraheerArtikelUitXml(leidraadXml, "24");
+    expect(result).toContain("Betalingstermijnen");
+    expect(result).not.toContain("Uitstel van betaling");
+  });
+
+  it("retourneert null voor niet-bestaand Leidraad-artikel", () => {
+    expect(extraheerArtikelUitXml(leidraadXml, "99")).toBeNull();
   });
 });
 
