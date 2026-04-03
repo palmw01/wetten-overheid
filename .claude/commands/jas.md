@@ -234,14 +234,14 @@ Maak per lid een subsectie. Nummer annotaties doorlopend over alle leden.
 
 | Nr | Formulering (letterlijk geciteerd) | JAS-element | Toelichting |
 |----|-----------------------------------|-------------|-------------|
-| <span style="display:block;background-color:#4472C4;text-align:center">1</span> | "[citaat]" | **[JAS-klasse]** | [interpretatiemethode + motivering] |
-| <span style="display:block;background-color:#FF0000;text-align:center">2</span> | "[citaat]" | **[JAS-klasse]** | [interpretatiemethode + motivering] |
+| <span style="background-color:#4472C4">1</span> | "[citaat]" | **[JAS-klasse]** | [interpretatiemethode + motivering] |
+| <span style="background-color:#FF0000">2</span> | "[citaat]" | **[JAS-klasse]** | [interpretatiemethode + motivering] |
 
 ### 4.2 Lid 2 — [korte omschrijving]
 
 | Nr | Formulering (letterlijk geciteerd) | JAS-element | Toelichting |
 |----|-----------------------------------|-------------|-------------|
-| <span style="display:block;background-color:#XXXXXX;text-align:center">[doorlopend nummer]</span> | "[citaat]" | **[JAS-klasse]** | [toelichting] |
+| <span style="background-color:#XXXXXX">[doorlopend nummer]</span> | "[citaat]" | **[JAS-klasse]** | [toelichting] |
 ```
 
 Na het laatste lid: voeg toe:
@@ -426,4 +426,4 @@ Citeer hier de volledige, onbewerkte wetstekst van artikelen die als kruisrefere
 - **MvT-verwijzingen alleen geverifieerd.** Nooit Kamerstukken-verwijzingen fabriceren; altijd "Verificatie vereist" markeren.
 - **Nulresultaat Leidraad: standaardmelding.** Gebruik exact de voorgeschreven tekst.
 - **Altijd opslaan.** Rapport als MD-bestand in `analyses/` conform het bestandsnaamschema in Stap 8.
-- **Kleurcodering Nr-cel.** In §4 krijgt elke Nr-cel de achtergrondkleur van het geclassificeerde JAS-element via `<span style="display:block;background-color:#XXXXXX;text-align:center">Nr</span>`. Gebruik de hex-codes uit de mapping in Stap 5.
+- **Kleurcodering Nr-cel.** In §4 krijgt elke Nr-cel de achtergrondkleur van het geclassificeerde JAS-element via `<span style="background-color:#XXXXXX">Nr</span>`. Gebruik de hex-codes uit de mapping in Stap 5.
