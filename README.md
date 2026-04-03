@@ -7,11 +7,12 @@ Werkruimte voor gestructureerde wetsanalyse op het domein **invordering van rijk
 ## Wat zit er in deze repo?
 
 ```
-wettenbank-mcp/        MCP-server: koppelt Claude aan wetten.overheid.nl
-analyses/              Gegenereerde wetsanalyserapporten en JAS-annotaties
-jas-kaders.md          Juridisch Analyseschema (JAS v1.0.7) — alle 13 annotatiekaders
-sjabloon-wetsanalyse.md  Standaard rapportagesjabloon
-CLAUDE.md              Werkafspraken voor Claude (rol, zoekstrategie, kwaliteitsstandaard)
+wettenbank-mcp/              MCP-server: koppelt Claude aan wetten.overheid.nl
+analyses/                    Gegenereerde wetsanalyserapporten en JAS-annotaties
+jas-kaders.md                JAS v1.0.7 — definitie van alle 13 annotatiekaders (referentie)
+CLAUDE.md                    Werkafspraken voor Claude (rol, MCP-strategie)
+.claude/commands/wetzoek.md  Workflow + kwaliteitseisen + rapportformat voor /wetzoek
+.claude/commands/jas.md      Workflow + kwaliteitseisen + rapportformat voor /jas
 ```
 
 ---
@@ -92,7 +93,7 @@ Wetsartikelen kunnen worden geannoteerd volgens het **Juridisch Analyseschema v1
 Het JAS maakt interpretatie- en preciseringskeuzes traceerbaar en vormt de basis voor ICT-implementatie van regelgeving.
 
 - **Annotatiekaders**: [`jas-kaders.md`](./jas-kaders.md) — alle 13 JAS-elementen met definities en herkenningsvragen
-- **Rapportagesjabloon**: [`sjabloon-wetsanalyse.md`](./sjabloon-wetsanalyse.md)
+- **Workflow + rapportformat**: [`.claude/commands/jas.md`](./.claude/commands/jas.md)
 - **Voorbeeldannotaties**: zie [`analyses/`](./analyses/)
 
 ---
