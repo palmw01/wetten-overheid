@@ -101,7 +101,13 @@ Genereer het rapport strikt conform het format hieronder. Elk veld is verplicht.
 
 ## Rapportformat (elk veld verplicht, volgorde onwijzigbaar)
 
-```markdown
+Genereer het rapport conform de onderstaande structuur. De sectienummers en koppen zijn exact en mogen niet worden gewijzigd.
+
+---
+
+### Frontmatter (YAML)
+
+```
 ---
 zoekterm: "$ARGUMENTS"
 varianten: [[v1], [v2], [v3], …]
@@ -114,17 +120,24 @@ wetten:
   - AWR (BWBR0002320)
   - Awb (BWBR0005537)
 ---
+```
 
+---
+
+### Rapportheader
+
+```
 # Wetsanalyse: "$ARGUMENTS"
 
 **Datum:** [DATUM]
 **Doorzochte bronnen:** Invorderingswet 1990 · Leidraad Invordering 2008 · Uitvoeringsbesluit IW 1990 · AWR · Awb
 **Peildatum wetgeving:** IW 1990: [datum] | Leidraad: [datum] | UB IW 1990: [datum] | AWR: [datum] | Awb: [datum]
 **Gezochte varianten:** [v1], [v2], [v3], …
+```
 
 ---
 
-## 1. Statistieken
+### §1 Statistieken
 
 | Bron | Artikelen met treffer | Aantal vermeldingen | Artikelnummers (oplopend) |
 |------|-----------------------|---------------------|---------------------------|
@@ -137,13 +150,13 @@ wetten:
 
 ---
 
-## 2. Vindplaatsen per bron
+### §2 Vindplaatsen per bron
 
-[Volgorde van secties altijd: 2.1 IW 1990 → 2.2 Leidraad → 2.3 UB IW 1990 → 2.4 AWR → 2.5 Awb]
-[Artikelen binnen elke sectie altijd oplopend gesorteerd op artikelnummer]
+Volgorde altijd: §2.1 IW 1990 → §2.2 Leidraad → §2.3 UB IW 1990 → §2.4 AWR → §2.5 Awb. Artikelen binnen elke sectie oplopend gesorteerd op artikelnummer.
 
-### 2.1 Invorderingswet 1990 (BWBR0004770)
+#### §2.1 Invorderingswet 1990 (BWBR0004770)
 
+```
 > *[Naam van het hoofdstuk en de afdeling, letterlijk uit de wetstekst]*
 
 #### Artikel [X] (IW 1990)
@@ -152,24 +165,23 @@ wetten:
 
 **Vindplaats zoekterm:** De term "[zoekterm of variant]" komt voor in [lid X / onderdeel Y].
 **Rechtsgevolg:** [Één zin: wat is het directe rechtsgevolg van dit artikel voor de betalingsplicht of invorderingsbevoegdheid.]
+```
 
----
+#### §2.2 Leidraad Invordering 2008 (BWBR0024096)
 
-### 2.2 Leidraad Invordering 2008 (BWBR0024096)
+Zelfde structuur als §2.1. Bij geen treffer: schrijf exact: "Geen treffer voor varianten [v1, v2, …]. De Leidraad gebruikt voor dit begrip mogelijk een andere term."
 
-[Zelfde structuur. Bij geen treffer: schrijf exact: "Geen treffer voor varianten [v1, v2, …]. De Leidraad gebruikt voor dit begrip mogelijk een andere term."]
+#### §2.3 Uitvoeringsbesluit IW 1990 (BWBR0004772)
 
-### 2.3 Uitvoeringsbesluit IW 1990 (BWBR0004772)
+Zelfde structuur als §2.1. Bij geen treffer: zelfde standaardmelding.
 
-[Zelfde structuur. Bij geen treffer: zelfde standaardmelding.]
+#### §2.4 Algemene wet inzake rijksbelastingen (BWBR0002320)
 
-### 2.4 Algemene wet inzake rijksbelastingen (BWBR0002320)
+Zelfde structuur als §2.1.
 
-[Zelfde structuur.]
+#### §2.5 Algemene wet bestuursrecht (BWBR0005537)
 
-### 2.5 Algemene wet bestuursrecht (BWBR0005537)
-
-[Zelfde structuur, plus:]
+Zelfde structuur als §2.1, aangevuld met:
 
 **Awb-toepasselijkheid (art. 1 lid 2 IW 1990):**
 
@@ -181,31 +193,31 @@ wetten:
 
 ---
 
-## 3. Kruisreferenties
+### §3 Kruisreferenties
 
-[Alleen expliciete verwijzingen die letterlijk in de artikeltekst staan. Geen aanvullingen op basis van eigen kennis.]
+Alleen expliciete verwijzingen die letterlijk in de artikeltekst staan. Geen aanvullingen op basis van eigen kennis.
 
-### 3.1 Interne verwijzingen
+#### §3.1 Interne verwijzingen
 
 | Artikel (bron) | Verwijst naar | Letterlijke verwijzingstekst |
 |----------------|---------------|------------------------------|
 | Art. X lid Y [wet] | Art. Z [wet] | "[exacte formulering uit de tekst]" |
 
-[Bij geen interne verwijzingen: "Geen interne verwijzingen gevonden in de artikelteksten."]
+Bij geen interne verwijzingen: schrijf exact "Geen interne verwijzingen gevonden in de artikelteksten."
 
-### 3.2 Externe verwijzingen
+#### §3.2 Externe verwijzingen
 
 | Artikel (bron) | Verwijst naar | Wet | Letterlijke verwijzingstekst | Geciteerde doeltekst |
 |----------------|---------------|-----|------------------------------|----------------------|
 | Art. X [wet] | Art. Y [wet] | [wet] | "[exacte formulering]" | "[letterlijke tekst van het gerefereerde lid]" |
 
-[Bij geen externe verwijzingen: "Geen externe verwijzingen gevonden in de artikelteksten."]
+Bij geen externe verwijzingen: schrijf exact "Geen externe verwijzingen gevonden in de artikelteksten."
 
 ---
 
-## 4. Juridische samenvatting
+### §4 Juridische samenvatting
 
-### 4.1 Betekenis en gebruik van de term
+#### §4.1 Betekenis en gebruik van de term
 
 Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke alinea:
 
@@ -213,7 +225,7 @@ Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke aline
 2. **Meerdere betekenissen:** Wordt de term in de gevonden artikelen in meer dan één juridische betekenis gebruikt? Zo ja: benoem elke betekenis en de vindplaats. Zo nee: schrijf "De term wordt in de gevonden artikelen in één betekenis gebruikt."
 3. **Verhouding IW 1990 – AWR – Awb:** Hoe verhoudt het gebruik in de IW 1990 zich tot het gebruik in de AWR en de Awb op basis van de gevonden artikelen?
 
-### 4.2 Samenhang tussen de bronnen
+#### §4.2 Samenhang tussen de bronnen
 
 Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke alinea:
 
@@ -221,15 +233,15 @@ Beantwoord de volgende drie vragen in deze volgorde, elk als afzonderlijke aline
 2. **Leidraad als beleidskader:** Hoe vult de Leidraad Invordering de wettelijke bepalingen aan? Verwijs naar het specifieke Leidraad-artikel uit §2. Bij geen treffer: "De Leidraad bevat geen bepalingen met de zoekterm; raadpleeg de Leidraad op aanverwante termen."
 3. **Awb-toepasselijkheid:** Welke Awb-titels zijn op grond van art. 1 lid 2 IW 1990 van toepassing en welke zijn uitgesloten? Verwijs naar de tabel in §2.5.
 
-### 4.3 Spanningsvelden
+#### §4.3 Spanningsvelden
 
-Gebruik uitsluitend de in §2 gevonden wetstekst als grondslag. Vul de tabel in voor elk geconstateerd spanningsveld. Bij geen spanningsvelden: schrijf de standaardzin exact als: "Op basis van de gevonden artikelen zijn geen spanningsvelden geconstateerd."
+Gebruik uitsluitend de in §2 gevonden wetstekst als grondslag. Bij geen spanningsvelden: schrijf exact "Op basis van de gevonden artikelen zijn geen spanningsvelden geconstateerd."
 
 | Nr | Spanning | Betrokken artikelen | Type |
 |----|---------|---------------------|------|
 | 1 | [omschrijving] | Art. X [wet] – Art. Y [wet] | Onduidelijk / Meerduidig / Conflicterend |
 
-### 4.4 Aandachtspunten voor de praktijk
+#### §4.4 Aandachtspunten voor de praktijk
 
 Geef **precies 3** genummerde aandachtspunten. Elk aandachtspunt heeft exact de volgende structuur:
 
@@ -237,7 +249,7 @@ Geef **precies 3** genummerde aandachtspunten. Elk aandachtspunt heeft exact de 
 *Vindplaats:* Art. X, lid Y [wet]
 *Gevolg voor de praktijk:* [Één zin over wat de ontvanger of belastingschuldige moet doen of nalaten.]
 
-### 4.5 Relevante jurisprudentie en beleid
+#### §4.5 Relevante jurisprudentie en beleid
 
 Neem uitsluitend op:
 - Verwijzingen naar Leidraad-artikelen die in §2 zijn gevonden
@@ -255,7 +267,7 @@ Sluit altijd af met deze vaste zin:
 
 ---
 
-## 5. Bronnen
+### §5 Bronnen
 
 | Bron | BWB-id | Geraadpleegde versie | Vindplaats |
 |------|--------|----------------------|------------|
@@ -264,7 +276,6 @@ Sluit altijd af met deze vaste zin:
 | UB IW 1990 | BWBR0004772 | [peildatum uit MCP] | wetten.overheid.nl |
 | AWR | BWBR0002320 | [peildatum uit MCP] | wetten.overheid.nl |
 | Awb | BWBR0005537 | [peildatum uit MCP] | wetten.overheid.nl |
-```
 
 ---
 
