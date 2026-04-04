@@ -294,6 +294,7 @@ style: |
 ---
 
 <!-- _class: lead -->
+<!-- _backgroundColor: #003082 -->
 
 # Automatische Wetsanalyse<br>met JAS + MCP
 
@@ -374,6 +375,7 @@ Het resultaat is AI-assistentie die voldoet aan de juridische kwaliteitseisen va
 ---
 
 <!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
 
 # Deel 1
 ## Het probleem & de oplossing
@@ -449,6 +451,7 @@ Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruis
 ---
 
 <!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
 
 # Deel 2
 ## Wettenbank MCP
@@ -485,32 +488,37 @@ Elke aanroep retourneert een **peildatum**. Versies raadpleegbaar tot ver voor d
 ## Technische architectuur
 
 ```
-Claude Code (AI-assistent)
-    |
+Claude Code
     |  JSON via stdio (MCP-protocol)
     v
-+-------------------------------------------+
-|  wettenbank-mcp  (TypeScript, 1 bestand)  |
-|                                           |
-|  Tool-handler                             |
-|  -> CQL-query bouwen                      |
-|  -> SRU-aanroep (HTTPS)                   |
-|  -> XML parseren (fast-xml-parser)        |
-|  -> Markdown formatteren                  |
-+------------------+------------------------+
-                   |
-        +----------+----------+
-        |                     |
-   SRU API                BWB Repository
-   zoekservice.overheid.nl  repository.officiele-
-   (zoeken + metadata)      overheidspublicaties.nl
-                            (volledige XML-tekst)
++------------------------------------------+
+|  wettenbank-mcp (TypeScript)             |
+|  -> CQL-query bouwen                     |
+|  -> SRU-aanroep (HTTPS)                  |
+|  -> XML parseren (fast-xml-parser)       |
+|  -> Markdown formatteren                 |
++-------------------+----------------------+
+                    |
+        +-----------+-----------+
+        |                       |
+  zoekservice.overheid.nl   repository.officiele-
+  SRU 2.0 API               overheidspublicaties.nl
+  (zoeken + metadata)       (BWB-toestand XML)
 ```
 
-<div class="highlight">
+<div class="columns">
+<div class="card">
 
-Transport: **StdIO** — Claude Desktop of Claude Code start de server als subprocess en wisselt JSON uit over stdin/stdout.
+**Transport: StdIO**
+Claude Desktop of Claude Code start de server als subprocess en wisselt JSON uit via stdin/stdout. Geen poort, geen HTTP.
 
+</div>
+<div class="card">
+
+**Geen API-sleutel**
+Publieke SRU-interface van KOOP. Alle wetgeving is CC-0 en direct opvraagbaar via het BWB-id.
+
+</div>
 </div>
 
 ---
@@ -583,6 +591,7 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 ---
 
 <!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
 
 # Deel 3
 ## JAS — Juridisch Analyseschema
@@ -636,70 +645,28 @@ Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst 
 
 ## De JAS-workflow: stap 0 tot 8
 
-<div class="columns">
-<div>
+| Stap | Actie | Inhoud |
+|------|-------|--------|
+| **0** | Controleren | Bestaande annotatie in `analyses/` opzoeken — peildatum vergelijken |
+| **1** | Parsen | Artikelnummer A, wet W, BWB-id B en begripsbepalings-artikel BD bepalen |
+| **2** | Parallel ophalen | Artikel A + begripsbepalingen BD tegelijk via MCP — noteer peildatum |
+| **3** | IW-context | Art. 1 lid 2 IW 1990 (Awb-uitsluitingsclausule) + Leidraad Invordering art. A |
+| **4** | Kruisreferenties | Interne + externe verwijzingen extraheren en parallel ophalen |
+| **5** | Annoteren | 13 JAS-elementen doorlopen — annotatietabel per lid opstellen |
+| **6** | Afleidingsregels | Beslisregels, rekenregels en parameters formaliseren |
+| **7** | Awb-check | Toepasselijkheidscheck o.b.v. art. 1 lid 2 IW 1990 (conditioneel) |
+| **8** | Opslaan | Timestamp ophalen — rapport als `.md` in `analyses/` bewaren |
 
-<div class="card">
-<h3>Stap 0 &mdash; Controleren</h3>
-Bestaande annotatie opzoeken. Bij hergebruik: peildatum vergelijken.
-</div>
+<div class="highlight">
 
-<br>
+Stap 3 en 7 zijn conditioneel: alleen bij W = IW 1990 of UB IW. Stap 2 en 4 worden parallel uitgevoerd via gelijktijdige MCP-aanroepen.
 
-<div class="card">
-<h3>Stap 1 &mdash; Parsen</h3>
-Artikelnummer, wet, BWB-id, begripsbepalings-artikel bepalen.
-</div>
-
-<br>
-
-<div class="card">
-<h3>Stap 2 &mdash; Parallel ophalen</h3>
-Artikel + begripsbepalingen tegelijk via MCP.
-</div>
-
-<br>
-
-<div class="card">
-<h3>Stap 3 &mdash; IW-context</h3>
-Art. 1 IW 1990 (Awb-uitsluitingsclausule) + Leidraad Invordering.
-</div>
-
-</div>
-<div>
-
-<div class="card">
-<h3>Stap 4 &mdash; Kruisreferenties</h3>
-Interne en externe verwijzingen uit de tekst extraheren en parallel ophalen.
-</div>
-
-<br>
-
-<div class="card">
-<h3>Stap 5 &mdash; Annoteren</h3>
-13 elementen doorlopen. Annotatietabel per lid opstellen.
-</div>
-
-<br>
-
-<div class="card">
-<h3>Stap 6 &mdash; Afleidingsregels</h3>
-Beslisregels, rekenregels en parameters formaliseren.
-</div>
-
-<br>
-
-<div class="card">
-<h3>Stap 7 &amp; 8 &mdash; Analyse + opslaan</h3>
-Awb-check (IW 1990), juridische analyse, rapport opslaan als `.md`.
-</div>
-
-</div>
 </div>
 
 ---
 
 <!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
 
 # Deel 4
 ## Concreet resultaat: Art. 9 IW 1990
@@ -784,6 +751,7 @@ Rapport Art. 9 IW 1990: **~4 500 woorden**, automatisch gegenereerd, opgeslagen 
 ---
 
 <!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
 
 # Deel 5
 ## Meerwaarde & volgende stappen
@@ -835,37 +803,20 @@ wetten overheid/
 <div class="columns-3">
 <div class="card">
 
-### Meer wetten annoteren
-De workflow is generiek. Elke wet met BWB-id kan worden geannoteerd — AWR, Awb, Successiewet, Wet WOZ.
+### Meer wetten & monitoring
+De workflow is generiek — elke wet met BWB-id (AWR, Awb, Successiewet, Wet WOZ). Gebruik `wettenbank_wijzigingen` voor automatische impact-analyse bij wetswijzigingen.
 
 </div>
 <div class="card">
 
-### Wijzigingsmonitoring
-`wettenbank_wijzigingen` signaleert gewijzigde regelingen. Combineer met bestaande annotaties voor impact-analyse.
+### Kennismodel genereren
+JAS-annotaties zijn directe invoer voor een ICT-kennismodel. Beslisregels, rekenregels en parameters zijn al geformaliseerd en klaar voor implementatie.
 
 </div>
 <div class="card-accent">
 
-### Kennismodel
-De JAS-annotaties zijn de invoer voor een ICT-kennismodel: beslisregels, rekenregels en parameters direct beschikbaar voor implementatie.
-
-</div>
-</div>
-
-<br>
-
-<div class="columns">
-<div class="card">
-
-### Andere MCP-clients
-Dezelfde server werkt in **Claude Desktop**, **Gemini CLI** en elke andere MCP-compatibele omgeving — geen aanpassingen nodig.
-
-</div>
-<div class="card">
-
-### Samenwerking
-Rapporten zijn Markdown — versiebaar in Git, deelbaar, peer-reviewbaar. Annotaties zijn herbruikbaar als basis voor volgende analyses.
+### Samenwerking & tooling
+Rapporten zijn Markdown — versiebaar in Git, deelbaar en peer-reviewbaar. De MCP-server werkt ook in **Claude Desktop** en **Gemini CLI** zonder aanpassingen.
 
 </div>
 </div>
@@ -873,6 +824,7 @@ Rapporten zijn Markdown — versiebaar in Git, deelbaar, peer-reviewbaar. Annota
 ---
 
 <!-- _class: lead -->
+<!-- _backgroundColor: #003082 -->
 
 # Vragen & Demo
 
