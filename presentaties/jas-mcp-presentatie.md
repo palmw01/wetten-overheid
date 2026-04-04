@@ -314,6 +314,7 @@ Een workflow die de Invorderingswet 1990 — en elke andere Nederlandse wet — 
 
 ## Agenda
 
+0. Context — AI, kenniswerkers en de Belastingdienst
 1. Het probleem — waarom handmatig niet schaalbaar is
 2. De oplossing — een end-to-end workflow
 3. Wettenbank MCP — toegang tot wetten.overheid.nl
@@ -420,11 +421,11 @@ Een artikel van de Invorderingswet grondig analyseren vraagt om:
 ## De oplossing
 
 <div class="stappen">
-  <div class="stap">Wettenbank MCP</div>
+  <div class="stap">/jas commando</div>
   <div class="pijl">&#8594;</div>
-  <div class="stap">Claude Code</div>
+  <div class="stap">Wettenbank MCP haalt wetstekst op</div>
   <div class="pijl">&#8594;</div>
-  <div class="stap">JAS-workflow</div>
+  <div class="stap">JAS-annotatie door Claude Code</div>
   <div class="pijl">&#8594;</div>
   <div class="stap">Rapport ~4 000 woorden</div>
 </div>
@@ -462,7 +463,7 @@ Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruis
 
 ## Wat is de Wettenbank MCP?
 
-Een **MCP-server** (Model Context Protocol) in TypeScript die Claude Code drie tools biedt:
+**MCP** staat voor *Model Context Protocol* — een open standaard waarmee een AI-assistent op een gestructureerde manier externe tools en databronnen kan raadplegen. De Wettenbank MCP is een zelfgebouwde MCP-server in TypeScript die Claude Code drie tools biedt:
 
 | Tool | Doel | Voorbeeld |
 |------|------|-----------|
@@ -509,8 +510,8 @@ Claude Desktop of Claude Code start de server als subprocess en wisselt JSON uit
 </div>
 <div class="card">
 
-**Geen API-sleutel**
-Publieke SRU-interface van KOOP. Alle wetgeving is CC-0 en direct opvraagbaar via het BWB-id.
+**Historische versies**
+Elke aanroep retourneert een **peildatum**. Versies zijn opvraagbaar op elke datum — essentieel voor wijzigingsanalyse en juridische reproduceer­baarheid.
 
 </div>
 </div>
@@ -580,7 +581,7 @@ Stap 1: SRU-query op titel → BWB-id ophalen
 Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 ```
 
-> Dit omzeilt een fundamentele beperking van de SRU-interface: `trefwoord` alleen doorzoekt enkel metadata, niet de wetstekst zelf.
+> Dit omzeilt een fundamentele beperking van de SRU-interface: `trefwoord` doorzoekt alleen metadata, niet de wetstekst zelf.
 
 ---
 
@@ -594,7 +595,7 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 
 ## Wat is JAS?
 
-**Juridisch Analyseschema v1.0.7** — standaard van het Ministerie van BZK (2024), gebaseerd op de Hohfeld-juridische taxonomie.
+**Juridisch Analyseschema v1.0.7** — standaard van het Ministerie van BZK (2024). Grondslag: de juridische categorietheorie van Hohfeld, die rechtsrelaties ontleedt in precies gedefinieerde bouwstenen.
 
 <div class="columns">
 <div>
@@ -647,7 +648,7 @@ Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst 
 
 <div class="highlight">
 
-Stap 3 en 7 zijn conditioneel: alleen bij W = IW 1990 of UB IW. Stap 2 en 4 worden parallel uitgevoerd via gelijktijdige MCP-aanroepen.
+Stap 3 en 7 zijn conditioneel: alleen bij de Invorderingswet 1990 of het Uitvoeringsbesluit IW 1990. Stap 2 en 4 worden parallel uitgevoerd via gelijktijdige MCP-aanroepen.
 
 </div>
 
@@ -722,7 +723,7 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 |--------|--------|
 | §7 | Kruisreferenties intern + extern + Awb |
 | §8 | Beleidskader Leidraad Invordering |
-| §9 | Juridische analyse gram/sys/teleo |
+| §9 | Juridische analyse gram./syst./teleologisch |
 | §10 | Lacunes en ontbrekend beleid |
 | §11 | Conclusie + onzekerheden |
 | A–B | Geraadpleegde artikelen + bronnen |
@@ -751,7 +752,7 @@ Rapport Art. 9 IW 1990: **~4 500 woorden**, automatisch gegenereerd, opgeslagen 
 | Aspect | Handmatig | Met workflow |
 |--------|-----------|--------------|
 | Doorlooptijd per artikel | Uren | Minuten |
-| Kruisverwijzingen | Handmatig volgen | Automatisch geextraheerd en opgezocht |
+| Kruisverwijzingen | Handmatig volgen | Automatisch geëxtraheerd en opgezocht |
 | Rekenregels & parameters | Impliciet of ongedocumenteerd | Geformaliseerd met formule en voorbeeld |
 | Awb-toepasselijkheidscheck | Ad-hoc | Systematisch o.b.v. art. 1 lid 2 IW 1990 |
 | Leidraad Invordering | Soms geraadpleegd | Altijd geciteerd in §8 |
@@ -778,7 +779,6 @@ wetten overheid/
 ├── CLAUDE.md                 # Werkafspraken + BWB-quickref
 ├── jas-kaders.md             # JAS v1.0.7 — 13 elementen + herkenningsvragen
 ├── jas-workflow.md           # Volledige workflow-documentatie
-├── wettenbank-mcp/README.md  # MCP-server architectuurdocumentatie
 └── .claude/commands/
     ├── jas.md                # /jas commando (artikel-annotatie)
     └── wetzoek.md            # /wetzoek commando (termanalyse)
