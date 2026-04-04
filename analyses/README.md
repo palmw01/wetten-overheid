@@ -31,7 +31,7 @@ Het commando doorzoekt automatisch de volgende kernbronnen via de MCP wettenbank
 | Bron | BWB-id |
 |------|--------|
 | Invorderingswet 1990 | BWBR0004770 |
-| Leidraad Invordering 2008 | BWBR0004800 |
+| Leidraad Invordering 2008 | BWBR0024096 |
 | Uitvoeringsbesluit IW 1990 | BWBR0004772 |
 | AWR | BWBR0002320 |
 | Awb | BWBR0005537 |
