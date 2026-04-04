@@ -1,0 +1,883 @@
+---
+marp: true
+theme: default
+paginate: true
+header: "Automatische Wetsanalyse — JAS + MCP"
+footer: "Belastingdienst — Domein Inning &nbsp;|&nbsp; 2026"
+backgroundColor: "#f8f9fa"
+style: |
+  /* ── Kleurpalet ── */
+  :root {
+    --bd-blauw:    #003082;
+    --bd-lichtblauw: #0065bd;
+    --bd-accent:   #e8700a;
+    --bd-lichtgrijs: #f0f2f5;
+    --bd-wit:      #ffffff;
+    --bd-tekst:    #1a1a2e;
+  }
+
+  /* ── Basistypografie ── */
+  section {
+    font-family: "Rijksoverheid Sans", "Noto Sans", Arial, sans-serif;
+    font-size: 22px;
+    color: var(--bd-tekst);
+    background-color: #f8f9fa;
+    padding: 50px 64px;
+  }
+
+  /* ── Header & footer ── */
+  header {
+    font-size: 14px;
+    color: var(--bd-lichtblauw);
+    top: 18px;
+    left: 64px;
+    right: 64px;
+  }
+  footer {
+    font-size: 13px;
+    color: #666;
+    bottom: 18px;
+    left: 64px;
+    right: 64px;
+  }
+
+  /* ── Paginanummer ── */
+  section::after {
+    font-size: 13px;
+    color: #888;
+    bottom: 18px;
+    right: 64px;
+  }
+
+  /* ── Koppen ── */
+  h1 {
+    color: var(--bd-blauw);
+    font-size: 46px;
+    font-weight: 700;
+    border-bottom: 3px solid var(--bd-lichtblauw);
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+  }
+  h2 {
+    color: var(--bd-blauw);
+    font-size: 32px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--bd-lichtblauw);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+  h3 {
+    color: var(--bd-lichtblauw);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  /* ── Titeldia ── */
+  section.lead {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: linear-gradient(160deg, var(--bd-blauw) 0%, var(--bd-lichtblauw) 100%);
+    color: var(--bd-wit);
+    text-align: left;
+    padding: 80px 96px;
+  }
+  section.lead h1 {
+    color: var(--bd-wit);
+    font-size: 52px;
+    border-bottom: 3px solid rgba(255,255,255,0.4);
+    margin-bottom: 16px;
+  }
+  section.lead h2 {
+    color: rgba(255,255,255,0.85);
+    font-size: 28px;
+    border: none;
+    font-weight: 400;
+    margin-bottom: 32px;
+  }
+  section.lead p {
+    color: rgba(255,255,255,0.75);
+    font-size: 18px;
+  }
+  section.lead strong {
+    color: var(--bd-wit);
+  }
+
+  /* ── Sectietiteldia ── */
+  section.sectie {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bd-blauw) 60%, #0054a8 100%);
+    color: var(--bd-wit);
+    padding: 60px 96px;
+  }
+  section.sectie h1 {
+    color: var(--bd-wit);
+    font-size: 48px;
+    border-bottom: 3px solid rgba(255,255,255,0.35);
+  }
+  section.sectie p {
+    color: rgba(255,255,255,0.8);
+    font-size: 22px;
+  }
+
+  /* ── Twee kolommen ── */
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+  .columns-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── Kaarten / boxes ── */
+  .card {
+    background: var(--bd-wit);
+    border-left: 4px solid var(--bd-lichtblauw);
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .card-accent {
+    background: var(--bd-wit);
+    border-left: 4px solid var(--bd-accent);
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .card h3 { margin-top: 0; }
+
+  /* ── Highlight-box ── */
+  .highlight {
+    background: #e8f0fe;
+    border: 1px solid #b8d0f8;
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin: 12px 0;
+  }
+  .highlight-oranje {
+    background: #fff4e6;
+    border: 1px solid #ffc875;
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin: 12px 0;
+  }
+
+  /* ── Vergelijkingstabel ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 19px;
+  }
+  th {
+    background: var(--bd-blauw);
+    color: var(--bd-wit);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #dde3ec;
+  }
+  tr:nth-child(even) td { background: #eef2f9; }
+  tr:nth-child(odd)  td { background: var(--bd-wit); }
+
+  /* ── Code ── */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.88em;
+    background: #e8ecf5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--bd-blauw);
+  }
+  pre {
+    background: #1e2a3a;
+    border-radius: 6px;
+    padding: 20px 24px;
+    font-size: 17px;
+    line-height: 1.55;
+    overflow: hidden;
+  }
+  pre code {
+    background: none;
+    color: #e8f0fe;
+    padding: 0;
+  }
+
+  /* ── Lijsten ── */
+  ul { padding-left: 28px; }
+  li { margin-bottom: 8px; line-height: 1.5; }
+  li::marker { color: var(--bd-lichtblauw); }
+
+  /* ── Labels / badges ── */
+  .badge {
+    display: inline-block;
+    background: var(--bd-lichtblauw);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-right: 6px;
+  }
+  .badge-groen {
+    background: #2e7d32;
+  }
+  .badge-oranje {
+    background: var(--bd-accent);
+  }
+
+  /* ── Pijl-stappen ── */
+  .stappen {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .stap {
+    background: var(--bd-blauw);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .pijl { color: var(--bd-lichtblauw); font-size: 22px; font-weight: bold; }
+
+  /* ── Geen header/footer op titeldia ── */
+  section.lead header,
+  section.lead footer,
+  section.lead::after,
+  section.sectie header,
+  section.sectie footer,
+  section.sectie::after { display: none; }
+
+  /* ── Agenda-slide ── */
+  section.agenda ol {
+    counter-reset: agenda-counter;
+    list-style: none;
+    padding: 0;
+  }
+  section.agenda ol li {
+    counter-increment: agenda-counter;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #dde3ec;
+    font-size: 21px;
+  }
+  section.agenda ol li::before {
+    content: counter(agenda-counter);
+    background: var(--bd-blauw);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+---
+
+<!-- _class: lead -->
+
+# Automatische Wetsanalyse<br>met JAS + MCP
+
+## Van wetgeving naar kennismodel
+
+Een workflow die de Invorderingswet 1990 — en elke andere Nederlandse wet — automatisch annoteert, ontleedt en documenteert.
+
+**Wettenbank MCP + JAS v1.0.7 + Claude Code** &nbsp;|&nbsp; Belastingdienst, Domein Inning
+
+---
+
+<!-- _class: agenda -->
+
+## Agenda
+
+1. Het probleem — waarom handmatig niet schaalbaar is
+2. De oplossing — een end-to-end workflow
+3. Wettenbank MCP — toegang tot wetten.overheid.nl
+4. Technische architectuur van de MCP-server
+5. JAS — Juridisch Analyseschema v1.0.7
+6. De JAS-workflow stap voor stap
+7. Concreet resultaat — Art. 9 IW 1990
+8. Meerwaarde handmatig vs. geautomatiseerd
+9. Projectstructuur en volgende stappen
+
+---
+
+## AI en kenniswerkers — de kloof
+
+![bg right:52% contain](anthropic-ai-labor-impact.png)
+
+**Bron:** Anthropic, *Economic and Labor Market Impacts* (2025)
+
+Het onderzoek meet voor 20+ beroepscategorieën:
+- **Blauw** — theoretische AI-dekking (wat _kan_)
+- **Rood** — daadwerkelijke AI-adoptie (wat _gebeurt_)
+
+<div class="highlight-oranje">
+
+**Legal** scoort een van de hoogste theoretische dekkingen van alle categorieën — maar de werkelijke adoptie loopt ver achter.
+
+</div>
+
+De kloof tussen potentieel en gebruik is het grootst in kennisintensieve juridische en beleidsmatige domeinen.
+
+---
+
+## Wat betekent dit voor de Belastingdienst?
+
+<div class="columns">
+<div>
+
+### Het potentieel is er
+Juridische analyse — wetsteksten lezen, kruisverwijzingen volgen, begrippen definiëren, rekenregels formaliseren — past precies in het profiel van taken waar AI-ondersteuning het meest effectief is.
+
+### De uitdaging
+Juridische kwaliteitseisen zijn streng: letterlijk citeren, bronvermelding, traceerbare interpretatie. Generieke AI-tools voldoen hier niet aan zonder aanvullende structuur.
+
+</div>
+<div>
+
+<div class="card-accent">
+
+### Dit project
+Sluit die kloof voor **Domein Inning**:
+
+- **Wettenbank MCP** zorgt dat de AI directe, actuele toegang heeft tot de echte wetstekst
+- **JAS-workflow** dwingt af dat analyses volledig, traceerbaar en gestandaardiseerd zijn
+- **CLAUDE.md** configureert de AI als senior jurist — elke sessie opnieuw
+
+Het resultaat is AI-assistentie die voldoet aan de juridische kwaliteitseisen van de Belastingdienst.
+
+</div>
+
+</div>
+</div>
+
+---
+
+<!-- _class: sectie -->
+
+# Deel 1
+## Het probleem & de oplossing
+
+---
+
+## Het probleem
+
+Een artikel van de Invorderingswet grondig analyseren vraagt om:
+
+<div class="columns">
+<div>
+
+### Handmatig opzoekwerk
+- Wetstekst lezen en kruisverwijzingen volgen
+- Leidraad Invordering erbij raadplegen
+- Awb-toepasselijkheid controleren via art. 1 lid 2 IW 1990
+- Externe wetten opzoeken (AWR, Awb, Wet BPM…)
+
+</div>
+<div>
+
+### Structureel documenteren
+- Termijnen en parameters destilleren
+- Afleidingsregels en formules opstellen
+- Beslisregels uitschrijven
+- Lacunes en spanningsvelden benoemen
+
+</div>
+</div>
+
+<div class="highlight-oranje">
+
+**Resultaat zonder tooling:** uren werk per artikel, inconsistente diepgang, moeilijk reproduceerbaar en niet gestandaardiseerd.
+
+</div>
+
+---
+
+## De oplossing
+
+<div class="stappen">
+  <div class="stap">Wettenbank MCP</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">Claude Code</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">JAS-workflow</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">Rapport ~4 000 woorden</div>
+</div>
+
+<div class="columns">
+<div class="card">
+
+### Wettenbank MCP
+Haalt wetsteksten **direct van wetten.overheid.nl** — geen API-sleutel, CC-0 data. Specifieke artikelen, peildatums, historische versies, volledige zoekfunctionaliteit.
+
+</div>
+<div class="card">
+
+### JAS v1.0.7
+Classificeert elk zinsdeel in **13 gestandaardiseerde elementen** (MinBZK-standaard, Hohfeld-taxonomie). Interpretatiemethode, delegatieketens, rekenregels — allemaal traceerbaar.
+
+</div>
+</div>
+
+<div class="highlight">
+
+Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruisreferenties, parameters, beslisregels, beleidsanalyse, juridische analyse, lacunes en conclusie.
+
+</div>
+
+---
+
+<!-- _class: sectie -->
+
+# Deel 2
+## Wettenbank MCP
+
+---
+
+## Wat is de Wettenbank MCP?
+
+Een **MCP-server** (Model Context Protocol) in TypeScript die Claude Code drie tools biedt:
+
+| Tool | Doel | Voorbeeld |
+|------|------|-----------|
+| `wettenbank_zoek` | Vind wetten op naam, rechtsgebied, type | Zoek alle AMvB's onder IW 1990 |
+| `wettenbank_ophalen` | Haal wet of specifiek artikel op; zoek termen; historische versies via peildatum | `artikel="9"`, `bwbId="BWBR0004770"` |
+| `wettenbank_wijzigingen` | Gewijzigde regelingen sinds datum X | Impact-analyse bij wetswijziging |
+
+<div class="columns">
+<div class="card">
+
+**Geen API-sleutel nodig**
+Publieke SRU-interface van KOOP (Kennis- en exploitatiecentrum Officiële Overheidspublicaties). Alle data is CC-0.
+
+</div>
+<div class="card">
+
+**Historische versies**
+Elke aanroep retourneert een **peildatum**. Versies raadpleegbaar tot ver voor de datum van vandaag — essentieel voor wijzigingsanalyse.
+
+</div>
+</div>
+
+---
+
+## Technische architectuur
+
+```
+Claude Code (AI-assistent)
+    |
+    |  JSON via stdio (MCP-protocol)
+    v
++-------------------------------------------+
+|  wettenbank-mcp  (TypeScript, 1 bestand)  |
+|                                           |
+|  Tool-handler                             |
+|  -> CQL-query bouwen                      |
+|  -> SRU-aanroep (HTTPS)                   |
+|  -> XML parseren (fast-xml-parser)        |
+|  -> Markdown formatteren                  |
++------------------+------------------------+
+                   |
+        +----------+----------+
+        |                     |
+   SRU API                BWB Repository
+   zoekservice.overheid.nl  repository.officiele-
+   (zoeken + metadata)      overheidspublicaties.nl
+                            (volledige XML-tekst)
+```
+
+<div class="highlight">
+
+Transport: **StdIO** — Claude Desktop of Claude Code start de server als subprocess en wisselt JSON uit over stdin/stdout.
+
+</div>
+
+---
+
+## Data pipeline: wettenbank\_ophalen
+
+<div class="stappen">
+  <div class="stap">1. SRU-request</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">2. Metadata</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">3. BWB XML</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">4. DOM-traversal</div>
+  <div class="pijl">&#8594;</div>
+  <div class="stap">5. Markdown</div>
+</div>
+
+<div class="columns">
+<div>
+
+**Stap 1–2: Zoeken**
+`sruRequest()` stuurt een CQL-query. `parseRecords()` extraheert het `Regeling`-object inclusief repository-URL.
+
+**Stap 3: Ophalen**
+`fetch(repoUrl)` haalt de volledige BWB-toestand XML op (conform `toestand_2016-1.xsd`).
+
+</div>
+<div>
+
+**Stap 4: Parsen**
+`wetParser.parse()` bouwt een DOM. De `isArray`-configuratie is gebaseerd op de XSD: elementen met `maxOccurs="unbounded"` (artikel, lid, li…) worden als array behandeld.
+
+**Stap 5: Formatteren**
+`zoekArtikelInDom()` vindt de juiste node. `formateerArtikelNode()` formatteert als markdown. Fallback op regex bij parsefouten.
+
+</div>
+</div>
+
+---
+
+## Slimme omzeiling: 50 KB-limiet
+
+<div class="columns">
+<div class="card">
+
+### Probleem
+Volledige wetten zoals de Awb zijn vaak groter dan 50 KB. Een `wettenbank_ophalen` zonder `artikel`-parameter retourneert alleen het begin.
+
+</div>
+<div class="card-accent">
+
+### Oplossing
+De `artikel`-parameter haalt **één XML-node** op, onafhankelijk van de totale wetgrootte. Werkt voor alle wetten, ook Awb-artikelen verspreid over honderden pagina's.
+
+</div>
+</div>
+
+<br>
+
+**Twee-staps zoeken** (`titel` + `trefwoord` samen):
+
+```
+Stap 1: SRU-query op titel → BWB-id ophalen
+Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
+```
+
+> Dit omzeilt een fundamentele beperking van de SRU-interface: `trefwoord` alleen doorzoekt enkel metadata, niet de wetstekst zelf.
+
+---
+
+<!-- _class: sectie -->
+
+# Deel 3
+## JAS — Juridisch Analyseschema
+
+---
+
+## Wat is JAS?
+
+**Juridisch Analyseschema v1.0.7** — standaard van het Ministerie van BZK (2024), gebaseerd op de Hohfeld-juridische taxonomie.
+
+<div class="columns">
+<div>
+
+### Doel
+Interpretatie- en preciseringskeuzes bij wetsartikelen **traceerbaar** maken en een **kennismodel** opstellen dat bruikbaar is voor ICT-implementatie.
+
+### 13 elementen
+
+<span class="badge">rechtssubject</span>
+<span class="badge">rechtsobject</span>
+<span class="badge">rechtsbetrekking</span>
+<span class="badge">rechtsfeit</span>
+<span class="badge">voorwaarde</span>
+<span class="badge">afleidingsregel</span>
+<span class="badge">variabele/waarde</span>
+<span class="badge">parameter/waarde</span>
+<span class="badge">operator</span>
+<span class="badge">tijdsaanduiding</span>
+<span class="badge">plaatsaanduiding</span>
+<span class="badge">delegatiebevoegdheid</span>
+<span class="badge">brondefinitie</span>
+
+</div>
+<div>
+
+### Interpretatiemethoden
+
+Elk geclassificeerd element bevat:
+
+1. **Grammaticale** interpretatie — letterlijke betekenis
+2. **Systematische** interpretatie — samenhang met andere bepalingen
+3. **Teleologische** interpretatie — ratio legis
+
+### Kwaliteitseis
+Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst is altijd de grondslag; nooit aanvullen op basis van eigen kennis.
+
+</div>
+</div>
+
+---
+
+## De JAS-workflow: stap 0 tot 8
+
+<div class="columns">
+<div>
+
+<div class="card">
+<h3>Stap 0 &mdash; Controleren</h3>
+Bestaande annotatie opzoeken. Bij hergebruik: peildatum vergelijken.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 1 &mdash; Parsen</h3>
+Artikelnummer, wet, BWB-id, begripsbepalings-artikel bepalen.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 2 &mdash; Parallel ophalen</h3>
+Artikel + begripsbepalingen tegelijk via MCP.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 3 &mdash; IW-context</h3>
+Art. 1 IW 1990 (Awb-uitsluitingsclausule) + Leidraad Invordering.
+</div>
+
+</div>
+<div>
+
+<div class="card">
+<h3>Stap 4 &mdash; Kruisreferenties</h3>
+Interne en externe verwijzingen uit de tekst extraheren en parallel ophalen.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 5 &mdash; Annoteren</h3>
+13 elementen doorlopen. Annotatietabel per lid opstellen.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 6 &mdash; Afleidingsregels</h3>
+Beslisregels, rekenregels en parameters formaliseren.
+</div>
+
+<br>
+
+<div class="card">
+<h3>Stap 7 &amp; 8 &mdash; Analyse + opslaan</h3>
+Awb-check (IW 1990), juridische analyse, rapport opslaan als `.md`.
+</div>
+
+</div>
+</div>
+
+---
+
+<!-- _class: sectie -->
+
+# Deel 4
+## Concreet resultaat: Art. 9 IW 1990
+
+---
+
+## Voorbeeld: Art. 9 IW 1990 — Betalingstermijnen
+
+Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 leden, 48 annotaties.**
+
+<div class="columns">
+<div>
+
+### Fragment annotatietabel
+
+| Nr | Formulering | JAS-element |
+|----|-------------|-------------|
+| 1 | "belastingaanslag" | **Rechtsobject** |
+| 2 | "is invorderbaar" | **Rechtsbetrekking** |
+| 3 | "zes weken" | **Parameter** |
+| 4 | "na de dagtekening" | **Tijdsaanduiding** |
+| 5 | "de belastingschuldige" | **Rechtssubject** |
+| 6 | "behoudens" | **Operator** |
+
+</div>
+<div>
+
+### Kwantitatieve output
+
+<div class="card">
+
+- **13 beslisregels** (BR-1 t/m BR-13)
+- **3 rekenregels** (N = 12 - M; N = 13 - M; N = 12 vast)
+- **8 parameters** (6 weken, 1 maand, 14 dagen, 10 dagen, 15 dagen, 16 maart, 5 jaar, 1 maand tussenpozen)
+- **9 interne** kruisverwijzingen
+- **4 externe** wetten geraadpleegd
+- **4 spanningsvelden** geidentificeerd
+- **3 lacunes** gedocumenteerd
+
+</div>
+
+</div>
+</div>
+
+---
+
+## Rapport-structuur: 12 secties + 2 bijlagen
+
+<div class="columns">
+<div>
+
+| Sectie | Inhoud |
+|--------|--------|
+| §1 | Wetstekst (letterlijk citaat) |
+| §2 | Structuurdiagram lid-relaties |
+| §3 | Brondefinities |
+| §4 | JAS-annotatie per lid |
+| §5 | Afleidingsregels & rekenstructuur |
+| §6 | Termijnen en tijdsaanduidingen |
+
+</div>
+<div>
+
+| Sectie | Inhoud |
+|--------|--------|
+| §7 | Kruisreferenties intern + extern + Awb |
+| §8 | Beleidskader Leidraad Invordering |
+| §9 | Juridische analyse gram/sys/teleo |
+| §10 | Lacunes en ontbrekend beleid |
+| §11 | Conclusie + onzekerheden |
+| A–B | Geraadpleegde artikelen + bronnen |
+
+</div>
+</div>
+
+<div class="highlight">
+
+Rapport Art. 9 IW 1990: **~4 500 woorden**, automatisch gegenereerd, opgeslagen als `analyses/jas-annotatie-art9-IW1990-2026-04-04_21-19-24.md`. Volledig traceerbaar, versiebaar en navolgbaar.
+
+</div>
+
+---
+
+<!-- _class: sectie -->
+
+# Deel 5
+## Meerwaarde & volgende stappen
+
+---
+
+## Handmatig vs. geautomatiseerd
+
+| Aspect | Handmatig | Met workflow |
+|--------|-----------|--------------|
+| Doorlooptijd per artikel | Uren | Minuten |
+| Kruisverwijzingen | Handmatig volgen | Automatisch geextraheerd en opgezocht |
+| Rekenregels & parameters | Impliciet of ongedocumenteerd | Geformaliseerd met formule en voorbeeld |
+| Awb-toepasselijkheidscheck | Ad-hoc | Systematisch o.b.v. art. 1 lid 2 IW 1990 |
+| Leidraad Invordering | Soms geraadpleegd | Altijd geciteerd in §8 |
+| Reproduceerbaarheid | Laag | Volledig traceerbaar, opgeslagen als MD |
+| Kwaliteitsconsistentie | Afhankelijk van analist | 14 vaste kwaliteitseisen, geen parafrase |
+| Versie-informatie | Ontbreekt vaak | Peildatum uit MCP, altijd vermeld |
+
+---
+
+## Projectstructuur
+
+```
+wetten overheid/
+├── wettenbank-mcp/           # TypeScript MCP-server
+│   ├── src/index.ts          # 1 bestand, 633 regels
+│   ├── src/index.test.ts     # Vitest unit tests
+│   └── package.json
+│
+├── analyses/                 # Gegenereerde rapporten
+│   └── jas-annotatie-art9-IW1990-2026-04-04_21-19-24.md
+│
+├── presentaties/             # Deze presentatie
+│
+├── CLAUDE.md                 # Werkafspraken + BWB-quickref
+├── jas-kaders.md             # JAS v1.0.7 — 13 elementen + herkenningsvragen
+├── jas-workflow.md           # Volledige workflow-documentatie
+├── wettenbank-mcp/README.md  # MCP-server architectuurdocumentatie
+└── .claude/commands/
+    ├── jas.md                # /jas commando (artikel-annotatie)
+    └── wetzoek.md            # /wetzoek commando (termanalyse)
+```
+
+---
+
+## Volgende stappen
+
+<div class="columns-3">
+<div class="card">
+
+### Meer wetten annoteren
+De workflow is generiek. Elke wet met BWB-id kan worden geannoteerd — AWR, Awb, Successiewet, Wet WOZ.
+
+</div>
+<div class="card">
+
+### Wijzigingsmonitoring
+`wettenbank_wijzigingen` signaleert gewijzigde regelingen. Combineer met bestaande annotaties voor impact-analyse.
+
+</div>
+<div class="card-accent">
+
+### Kennismodel
+De JAS-annotaties zijn de invoer voor een ICT-kennismodel: beslisregels, rekenregels en parameters direct beschikbaar voor implementatie.
+
+</div>
+</div>
+
+<br>
+
+<div class="columns">
+<div class="card">
+
+### Andere MCP-clients
+Dezelfde server werkt in **Claude Desktop**, **Gemini CLI** en elke andere MCP-compatibele omgeving — geen aanpassingen nodig.
+
+</div>
+<div class="card">
+
+### Samenwerking
+Rapporten zijn Markdown — versiebaar in Git, deelbaar, peer-reviewbaar. Annotaties zijn herbruikbaar als basis voor volgende analyses.
+
+</div>
+</div>
+
+---
+
+<!-- _class: lead -->
+
+# Vragen & Demo
+
+## Livecorrectie: /jas art25-iw1990
+
+Een artikel annoteren in real-time — van wetstekst naar volledig rapport.
+
+**Belastingdienst — Domein Inning**
