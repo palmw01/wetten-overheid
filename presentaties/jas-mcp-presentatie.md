@@ -118,6 +118,10 @@ style: |
     font-size: 48px;
     border-bottom: 3px solid rgba(255,255,255,0.35);
   }
+  section.sectie h2 {
+    color: var(--bd-wit);
+    border-bottom-color: rgba(255,255,255,0.3);
+  }
   section.sectie p {
     color: rgba(255,255,255,0.8);
     font-size: 22px;
@@ -334,11 +338,9 @@ Het onderzoek meet voor 20+ beroepscategorieën:
 
 <div class="highlight-oranje">
 
-**Legal** scoort een van de hoogste theoretische dekkingen van alle categorieën — maar de werkelijke adoptie loopt ver achter.
+**Legal** scoort een van de hoogste theoretische dekkingen van alle categorieën — maar de werkelijke adoptie loopt ver achter. De kloof is het grootst in kennisintensieve juridische domeinen.
 
 </div>
-
-De kloof tussen potentieel en gebruik is het grootst in kennisintensieve juridische en beleidsmatige domeinen.
 
 ---
 
@@ -488,22 +490,14 @@ Elke aanroep retourneert een **peildatum**. Versies raadpleegbaar tot ver voor d
 ## Technische architectuur
 
 ```
-Claude Code
-    |  JSON via stdio (MCP-protocol)
-    v
-+------------------------------------------+
-|  wettenbank-mcp (TypeScript)             |
-|  -> CQL-query bouwen                     |
-|  -> SRU-aanroep (HTTPS)                  |
-|  -> XML parseren (fast-xml-parser)       |
-|  -> Markdown formatteren                 |
-+-------------------+----------------------+
-                    |
-        +-----------+-----------+
-        |                       |
-  zoekservice.overheid.nl   repository.officiele-
-  SRU 2.0 API               overheidspublicaties.nl
-  (zoeken + metadata)       (BWB-toestand XML)
+Claude Code  (JSON via stdio / MCP-protocol)
+     |
+     v
+wettenbank-mcp  (TypeScript, src/index.ts)
+     CQL-query bouwen → SRU-aanroep → XML parseren → Markdown
+     |
+     +-- zoekservice.overheid.nl        (SRU 2.0 — zoeken + metadata)
+     +-- repository.officiele-overheidspublicaties.nl  (BWB-toestand XML)
 ```
 
 <div class="columns">
@@ -605,9 +599,6 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 <div class="columns">
 <div>
 
-### Doel
-Interpretatie- en preciseringskeuzes bij wetsartikelen **traceerbaar** maken en een **kennismodel** opstellen dat bruikbaar is voor ICT-implementatie.
-
 ### 13 elementen
 
 <span class="badge">rechtssubject</span>
@@ -627,15 +618,12 @@ Interpretatie- en preciseringskeuzes bij wetsartikelen **traceerbaar** maken en 
 </div>
 <div>
 
-### Interpretatiemethoden
-
-Elk geclassificeerd element bevat:
+### Per element vastleggen
 
 1. **Grammaticale** interpretatie — letterlijke betekenis
 2. **Systematische** interpretatie — samenhang met andere bepalingen
 3. **Teleologische** interpretatie — ratio legis
 
-### Kwaliteitseis
 Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst is altijd de grondslag; nooit aanvullen op basis van eigen kennis.
 
 </div>
