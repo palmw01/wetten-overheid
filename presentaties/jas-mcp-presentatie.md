@@ -277,7 +277,7 @@ style: |
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 10px 0;
+    padding: 7px 0;
     border-bottom: 1px solid #dde3ec;
     font-size: 21px;
   }
