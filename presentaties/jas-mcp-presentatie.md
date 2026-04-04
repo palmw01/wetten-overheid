@@ -595,8 +595,6 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 
 ## Wat is JAS?
 
-**Juridisch Analyseschema v1.0.7** — standaard van het Ministerie van BZK (2024). Grondslag: de juridische categorietheorie van Hohfeld, die rechtsrelaties ontleedt in precies gedefinieerde bouwstenen.
-
 <div class="columns">
 <div>
 
@@ -619,13 +617,16 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 </div>
 <div>
 
-### Per element vastleggen
+### Juridisch Analyseschema v1.0.7
 
+Standaard van het Ministerie van BZK (2024), gebaseerd op de juridische categorietheorie van Hohfeld.
+
+Per element vastleggen:
 1. **Grammaticale** interpretatie — letterlijke betekenis
 2. **Systematische** interpretatie — samenhang met andere bepalingen
 3. **Teleologische** interpretatie — ratio legis
 
-Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst is altijd de grondslag.
+Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd.
 
 </div>
 </div>
@@ -816,7 +817,7 @@ Rapporten zijn Markdown — versiebaar in Git, deelbaar en peer-reviewbaar. De M
 
 # Vragen & Demo
 
-## Livecorrectie: /jas art25-iw1990
+## Live demo: /jas art25-iw1990
 
 Een artikel annoteren in real-time — van wetstekst naar volledig rapport.
 
