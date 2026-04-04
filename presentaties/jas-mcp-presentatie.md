@@ -602,19 +602,19 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 
 ### 13 elementen
 
-<span class="badge">rechtssubject</span>
-<span class="badge">rechtsobject</span>
-<span class="badge">rechtsbetrekking</span>
-<span class="badge">rechtsfeit</span>
-<span class="badge">voorwaarde</span>
-<span class="badge">afleidingsregel</span>
-<span class="badge">variabele/waarde</span>
-<span class="badge">parameter/waarde</span>
-<span class="badge">operator</span>
-<span class="badge">tijdsaanduiding</span>
-<span class="badge">plaatsaanduiding</span>
-<span class="badge">delegatiebevoegdheid</span>
-<span class="badge">brondefinitie</span>
+<span class="badge" style="background:#4472C4;color:#fff">rechtssubject</span>
+<span class="badge" style="background:#70AD47;color:#fff">rechtsobject</span>
+<span class="badge" style="background:#FF0000;color:#fff">rechtsbetrekking</span>
+<span class="badge" style="background:#FFC000;color:#333">rechtsfeit</span>
+<span class="badge" style="background:#7030A0;color:#fff">voorwaarde</span>
+<span class="badge" style="background:#00B0F0;color:#333">afleidingsregel</span>
+<span class="badge" style="background:#92D050;color:#333">variabele/waarde</span>
+<span class="badge" style="background:#FFD966;color:#333">parameter/waarde</span>
+<span class="badge" style="background:#808080;color:#fff">operator</span>
+<span class="badge" style="background:#F4B942;color:#333">tijdsaanduiding</span>
+<span class="badge" style="background:#9DC3E6;color:#333">plaatsaanduiding</span>
+<span class="badge" style="background:#C9C9C9;color:#333">delegatiebevoegdheid</span>
+<span class="badge" style="background:#D6B4C8;color:#333">brondefinitie</span>
 
 </div>
 <div>
@@ -625,7 +625,7 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 2. **Systematische** interpretatie — samenhang met andere bepalingen
 3. **Teleologische** interpretatie — ratio legis
 
-Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst is altijd de grondslag; nooit aanvullen op basis van eigen kennis.
+Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd. Wetstekst is altijd de grondslag.
 
 </div>
 </div>
