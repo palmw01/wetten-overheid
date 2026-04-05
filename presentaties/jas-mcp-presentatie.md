@@ -412,8 +412,7 @@ Een artikel van de Invorderingswet grondig analyseren vraagt om:
 
 <div class="highlight-oranje">
 
-**Resultaat zonder tooling:** uren werk per artikel, inconsistente diepgang, moeilijk reproduceerbaar en niet gestandaardiseerd.
-
+**Resultaat zonder tooling:** de analyse kosten per artikel meer tijd en is deze minder consistent, reproduceerbaar en gestandaardiseerd.
 </div>
 
 ---
@@ -447,7 +446,7 @@ Classificeert elk zinsdeel in **13 gestandaardiseerde elementen** (MinBZK-standa
 
 <div class="highlight">
 
-Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruisreferenties, parameters, beslisregels, beleidsanalyse, juridische analyse, lacunes en conclusie.
+Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruisreferenties, parameters, beslisregels, beleidsanalyse, juridische analyse, lacunes en conclusie. **~7 000 woorden.**
 
 </div>
 
@@ -649,7 +648,7 @@ Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd.
 
 <div class="highlight">
 
-Stap 3 en 7 zijn conditioneel: alleen bij de Invorderingswet 1990 of het Uitvoeringsbesluit IW 1990. Stap 2 en 4 worden parallel uitgevoerd via gelijktijdige MCP-aanroepen.
+Stap 3 is conditioneel voor IW 1990 én UB IW 1990; stap 7 uitsluitend voor de Invorderingswet 1990. Stap 2 en 4 worden parallel uitgevoerd via gelijktijdige MCP-aanroepen.
 
 </div>
 
@@ -688,12 +687,12 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 
 <div class="card">
 
-- **13 beslisregels** (BR-1 t/m BR-13)
-- **3 rekenregels** (N = 12 - M; N = 13 - M; N = 12 vast)
+- **11 beslisregels** (BR-1 t/m BR-11, sommige met a/b-variant)
+- **3 rekenregels** (N = 12 − M; N = 13 − M; N = 12 vast)
 - **8 parameters** (6 weken, 1 maand, 14 dagen, 10 dagen, 15 dagen, 16 maart, 5 jaar, 1 maand tussenpozen)
-- **9 interne** kruisverwijzingen
-- **4 externe** wetten geraadpleegd
-- **4 spanningsvelden** geidentificeerd
+- **5 interne** kruisverwijzingen (naar art. 2 IW 1990)
+- **5 externe** wetten geraadpleegd (Adw, Wet BPM, Wet bzm, DWU, ATW)
+- **4 spanningsvelden** geïdentificeerd
 - **3 lacunes** gedocumenteerd
 
 </div>
@@ -734,7 +733,7 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 
 <div class="highlight">
 
-Rapport Art. 9 IW 1990: **~4 500 woorden**, automatisch gegenereerd, opgeslagen als `analyses/jas-annotatie-art9-IW1990-2026-04-04_21-19-24.md`. Volledig traceerbaar, versiebaar en navolgbaar.
+Rapport Art. 9 IW 1990: **~7 300 woorden**, automatisch gegenereerd, opgeslagen als `analyses/jas-annotatie-art9-IW1990-2026-04-04_21-19-24.md`. Volledig traceerbaar, versiebaar en navolgbaar.
 
 </div>
 
@@ -768,7 +767,7 @@ Rapport Art. 9 IW 1990: **~4 500 woorden**, automatisch gegenereerd, opgeslagen 
 ```
 wetten overheid/
 ├── wettenbank-mcp/           # TypeScript MCP-server
-│   ├── src/index.ts          # 1 bestand, 633 regels
+│   ├── src/index.ts          # 1 bestand, 632 regels
 │   ├── src/index.test.ts     # Vitest unit tests
 │   └── package.json
 │

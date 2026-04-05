@@ -10,3 +10,6 @@ wettenbank-mcp/dist/
 
 # Gegenereerde HTML-renders van rapporten
 analyses/*.html
+
+# Sprekersnotities (lokaal gebruik)
+presentaties/*-sprekersnotities.md
