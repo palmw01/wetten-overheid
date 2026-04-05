@@ -664,7 +664,7 @@ Stap 3 is conditioneel voor IW 1990 én UB IW 1990; stap 7 uitsluitend voor de I
 
 ## Voorbeeld: Art. 9 IW 1990 — Betalingstermijnen
 
-Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 leden, 48 annotaties.**
+Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 leden, 57 annotaties.**
 
 <div class="columns">
 <div>
@@ -677,8 +677,8 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 | 2 | "is invorderbaar" | **Rechtsbetrekking** |
 | 3 | "zes weken" | **Parameter** |
 | 4 | "na de dagtekening" | **Tijdsaanduiding** |
-| 5 | "de belastingschuldige" | **Rechtssubject** |
-| 6 | "behoudens" | **Operator** |
+| 5 | "In afwijking van het eerste lid" | **Afleidingsregel** |
+| 6 | "een navorderingsaanslag" | **Rechtsobject** |
 
 </div>
 <div>
@@ -687,11 +687,11 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 
 <div class="card">
 
-- **11 beslisregels** (BR-1 t/m BR-11, sommige met a/b-variant)
+- **14 beslisregels**
 - **3 rekenregels** (N = 12 − M; N = 13 − M; N = 12 vast)
 - **8 parameters** (6 weken, 1 maand, 14 dagen, 10 dagen, 15 dagen, 16 maart, 5 jaar, 1 maand tussenpozen)
-- **5 interne** kruisverwijzingen (naar art. 2 IW 1990)
-- **5 externe** wetten geraadpleegd (Adw, Wet BPM, Wet bzm, DWU, ATW)
+- **4 interne** kruisverwijzingen (naar art. 2 IW 1990)
+- **4 externe** wetten geraadpleegd (Wet BPM 1992, Wet ZMR, DWU, Algemene termijnenwet)
 - **4 spanningsvelden** geïdentificeerd
 - **3 lacunes** gedocumenteerd
 
