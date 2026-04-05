@@ -1,5 +1,5 @@
 ---
-description: Voer een volledige JAS-annotatie (v1.0.7) uit op een wetsbepaling en sla het rapport op als MD-bestand. Gebruik: /jas art. 25 IW 1990 of /jas art. 36 lid 4 IW 1990
+description: Voer een volledige JAS-annotatie (v1.0.10) uit op een wetsbepaling en sla het rapport op als MD-bestand. Gebruik: /jas art. 25 IW 1990 of /jas art. 36 lid 4 IW 1990
 ---
 
 # /jas — JAS-annotatie Wetsbepaling
@@ -150,7 +150,7 @@ datum: [YYYY-MM-DD]
 timestamp: [YYYY-MM-DD_HH-MM-SS]
 peildatum: [peildatum [PD] uit MCP]
 analist: Belastingdienst — Domein Inning
-jas-versie: 1.0.7
+jas-versie: 1.0.10
 ---
 ```
 
@@ -165,7 +165,7 @@ jas-versie: 1.0.7
 **Analysedatum:** [DATUM]
 **Peildatum wetstekst:** [PD] ([wet], geldig t/m [vervaldatum uit MCP])
 **Analist:** Belastingdienst — Domein Inning
-**JAS-versie:** 1.0.7
+**JAS-versie:** 1.0.10
 ```
 
 ---
