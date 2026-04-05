@@ -549,7 +549,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { bwbId, peildatum, artikel, zoekterm } = args as Record<string, string>;
       const { formatted, inhoud, rawXml } = await haalWetstekstOp(bwbId, peildatum);
 
-      const header = formatted.split("\n---\n")[0];
+      const header = formatted.split("\n")[0];
 
       // Artikel-extractie: haal één specifiek artikel op
       if (artikel) {
