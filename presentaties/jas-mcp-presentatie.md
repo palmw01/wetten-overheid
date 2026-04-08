@@ -308,6 +308,16 @@ Een workflow die de Invorderingswet 1990 — en elke andere Nederlandse wet — 
 
 **Wettenbank MCP + JAS v1.0.10 + Claude Code** &nbsp;|&nbsp; Belastingdienst, Domein Inning
 
+<!--
+Wat je zegt:
+"Ik ga jullie laten zien hoe je met een combinatie van drie dingen — een zelfgebouwde MCP-server, een gestandaardiseerd annotatieschema en Claude Code — een Nederlandse wet volledig en gestructureerd kunt annoteren. Sneller dan handmatig, consistenter dan ad hoc, en volledig traceerbaar."
+
+Achtergrond:
+- Het project is gebouwd voor Domein Inning van de Belastingdienst, maar de workflow is generiek en werkt voor elke wet met een BWB-id.
+- De drie componenten versterken elkaar: MCP zorgt voor betrouwbare data, JAS voor vaste structuur, Claude Code voor de uitvoering en het geheugen (CLAUDE.md).
+- De titel "Van wetgeving naar kennismodel" verwijst naar het eindresultaat: JAS-annotaties zijn directe invoer voor ICT-kennismodellen (RegelSpraak, DMN).
+-->
+
 ---
 
 <!-- _class: agenda -->
@@ -321,9 +331,19 @@ Een workflow die de Invorderingswet 1990 — en elke andere Nederlandse wet — 
 4. Technische architectuur van de MCP-server
 5. JAS — Juridisch Analyseschema v1.0.10
 6. De JAS-workflow stap voor stap
-7. Concreet resultaat — Art. 9 IW 1990
-8. Meerwaarde handmatig vs. geautomatiseerd
-9. Projectstructuur en volgende stappen
+7. Skills-architectuur — token-isolatie via context:fork
+8. Concreet resultaat — Art. 9 IW 1990
+9. Meerwaarde handmatig vs. geautomatiseerd
+10. Projectstructuur en volgende stappen
+
+<!--
+Wat je zegt:
+"We beginnen met de 'waarom' — het Anthropic-onderzoek dat laat zien hoe groot de kloof is tussen wat AI voor juridische kenniswerkers kán doen en wat er feitelijk gebeurt. Dan de oplossing, de techniek, en een concreet voorbeeld aan het einde inclusief een live demo."
+
+Achtergrond:
+- Agendapunt 0 ("Context") staat bewust los: het is het motiverende kader, geen onderdeel van de technische oplossing.
+- De demo aan het einde (Art. 25 IW 1990, uitstel van betaling) is bewust een ander artikel dan het voorbeeld in de presentatie (Art. 9), zodat de live-run niet als "trucje" overkomt.
+-->
 
 ---
 
@@ -342,6 +362,18 @@ Het onderzoek meet voor 20+ beroepscategorieën:
 **Legal** scoort een van de hoogste theoretische dekkingen van alle categorieën — maar de werkelijke adoptie loopt ver achter. De kloof is het grootst in kennisintensieve juridische domeinen.
 
 </div>
+
+<!--
+Wat je zegt:
+"Anthropic heeft gemeten hoeveel van het werk in meer dan twintig beroepscategorieën theoretisch door AI ondersteund kan worden, en hoeveel er in de praktijk ook echt zo wordt gebruikt. Legal zit in de top qua potentieel — maar de adoptie is laag. Dat is precies de kloof die dit project wil dichten."
+
+Achtergrond:
+- Het rapport heet "Economic and Labor Market Impacts" (Anthropic, 2025). Het is gepubliceerd als onderdeel van bredere discussie over AI en de arbeidsmarkt.
+- "Theoretische dekking" = percentage van taken in een beroep dat binnen de huidige technische capaciteit van AI valt (taakdecompositie-methode).
+- "Werkelijke adoptie" = gebruik gemeten via surveys en gedragsdata.
+- De kloof in legal is groot omdat juridische kwaliteitseisen (bronvermelding, letterlijk citeren, traceerbare interpretatie) generieke AI-tools niet automatisch vervullen — ze moeten worden afgedwongen via structuur zoals JAS.
+- Als iemand vraagt naar de bron: Anthropic publiceerde dit in 2025; de exacte titel en URL staan op de dia.
+-->
 
 ---
 
@@ -375,6 +407,16 @@ Het resultaat is AI-assistentie die voldoet aan de juridische kwaliteitseisen va
 </div>
 </div>
 
+<!--
+Wat je zegt:
+"Juridische analyse past perfect bij wat AI goed kan: tekst lezen, verwijzingen volgen, begrippen definiëren. De uitdaging is kwaliteitsborging. Generieke AI hallucineert, parafraseert, en vergeet bronnen te vermelden. Dit project lost dat op met drie lagen: de MCP-server voor betrouwbare data, JAS voor de structuur, en CLAUDE.md als geheugen van de AI."
+
+Achtergrond:
+- CLAUDE.md is een configuratiebestand dat Claude Code bij elke sessie inleest. Het bevat werkafspraken, BWB-ids van kernwetten, zoekstrategie en kwaliteitseisen. Dit is wat ervoor zorgt dat de AI zich gedraagt als een "senior jurist" — niet via finetuning, maar via instructies.
+- De drie pilaren zijn bewust ontkoppeld: de MCP-server werkt ook met Gemini of andere AI-tools; JAS is een document-standaard die ook handmatig bruikbaar is; Claude Code is vervangbaar door een andere AI-assistent.
+- "Domein Inning" is de afdeling van de Belastingdienst die verantwoordelijk is voor de invordering van rijksbelastingen — betaling, uitstel, beslag, aansprakelijkheid, kwijtschelding.
+-->
+
 ---
 
 <!-- _class: sectie -->
@@ -382,6 +424,11 @@ Het resultaat is AI-assistentie die voldoet aan de juridische kwaliteitseisen va
 
 # Deel 1
 ## Het probleem & de oplossing
+
+<!--
+Wat je zegt:
+"Laten we beginnen met het probleem dat we proberen op te lossen."
+-->
 
 ---
 
@@ -415,12 +462,22 @@ Een artikel van de Invorderingswet grondig analyseren vraagt om:
 **Resultaat zonder tooling:** de analyse kosten per artikel meer tijd en is deze minder consistent, reproduceerbaar en gestandaardiseerd.
 </div>
 
+<!--
+Wat je zegt:
+"Een artikel van de Invorderingswet grondig analyseren is arbeidsintensief. Je moet de tekst lezen, kruisverwijzingen volgen — soms drie of vier niveaus diep — de Leidraad Invordering erbij raadplegen, en dat alles documenteren in een consistent format. Zonder tooling kost dat per artikel uren, en het resultaat is niet reproduceerbaar."
+
+Achtergrond:
+- Art. 1 lid 2 IW 1990 is de zogeheten "uitsluitingsclausule": het bepaalt welke bepalingen van de Awb van toepassing zijn op de invordering. Dit artikel moet bij elk IW-artikel worden gecheckt.
+- De Leidraad Invordering is een beleidsregel (geen wet) die de Belastingdienst zelf uitgeeft. Hij vult de IW 1990 in op uitvoerend niveau — tarieven, termijnen, bevoegdheden. BWB-id: BWBR0024096.
+- "Rekenregels formaliseren" verwijst naar het vastleggen van formules zoals termijnberekeningen (bijv. Art. 9: termijn = 6 weken na dagtekening aanslag, met uitzonderingen).
+-->
+
 ---
 
 ## De oplossing
 
 <div class="stappen">
-  <div class="stap">/jas commando</div>
+  <div class="stap">/jas skill</div>
   <div class="pijl">&#8594;</div>
   <div class="stap">Wettenbank MCP haalt wetstekst op</div>
   <div class="pijl">&#8594;</div>
@@ -446,9 +503,19 @@ Classificeert elk zinsdeel in **13 gestandaardiseerde elementen** (MinBZK-standa
 
 <div class="highlight">
 
-Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruisreferenties, parameters, beslisregels, beleidsanalyse, juridische analyse, lacunes en conclusie. **~7 000 woorden.**
+De skill `/jas art9-iw1990` levert in minuten een volledig rapport op: kruisreferenties, parameters, beslisregels, beleidsanalyse, juridische analyse, lacunes en conclusie. **~7 000 woorden.**
 
 </div>
+
+<!--
+Wat je zegt:
+"De oplossing is één skill: /jas gevolgd door het artikelnummer. Die skill triggert de MCP-server om de wetstekst op te halen, geeft die aan Claude Code met de JAS-instructies, en een paar minuten later ligt er een rapport van circa 7000 woorden klaar. Volledig traceerbaar, opgeslagen als Markdown. De executie vindt plaats in een geïsoleerde context — de hoofdconversatie ziet alleen het bestandspad."
+
+Achtergrond:
+- /jas is een skill in Claude Code — een herbruikbaar promptmodule die in een geïsoleerde context (`context: fork`) wordt uitgevoerd. De werkwijze staat in `.claude/skills/jas/SKILL.md`, de taxonomie in `kaders.md` en het rapportformat in `rapportformat.md`.
+- "CC-0 data" betekent dat de inhoud van wetten.overheid.nl rechtenvrij is (publiek domein). Er zijn geen licentiekosten of beperkingen voor gebruik.
+- De output van ~4000 woorden voor Art. 9 is representatief; complexere artikelen (meer leden, meer verwijzingen) kunnen groter uitpakken.
+-->
 
 ---
 
@@ -457,6 +524,11 @@ Het commando `/jas art9-iw1990` levert in minuten een volledig rapport op: kruis
 
 # Deel 2
 ## Wettenbank MCP
+
+<!--
+Wat je zegt:
+"Dan de technische kern: de Wettenbank MCP-server."
+-->
 
 ---
 
@@ -484,6 +556,18 @@ Elke aanroep retourneert een **peildatum**. Versies raadpleegbaar tot ver voor d
 
 </div>
 </div>
+
+<!--
+Wat je zegt:
+"MCP — Model Context Protocol — is een open standaard van Anthropic waarmee een AI-assistent op een gestructureerde manier externe tools en databronnen kan aanroepen. Vergelijk het met een API-laag tussen de AI en de buitenwereld. De Wettenbank MCP is een zelfgebouwde server in TypeScript die Claude Code drie tools geeft: zoeken, ophalen en wijzigingen monitoren."
+
+Achtergrond:
+- MCP is in 2024 gestandaardiseerd door Anthropic en wordt inmiddels ook ondersteund door andere AI-tools (Cursor, Gemini). Het protocol gebruikt JSON-RPC via stdio of HTTP.
+- KOOP staat voor Kennis- en exploitatiecentrum Officiële Overheidspublicaties — de organisatie die wetten.overheid.nl beheert. Ze bieden een SRU 2.0-interface (Search/Retrieve via URL) aan, een bibliotheekstandaard voor zoekopdrachten.
+- SRU (Search/Retrieve via URL) is een internationale bibliotheekstandaard (Z39.50-familie) voor het doorzoeken van metadatacatalogi. De Wettenbank MCP gebruikt dit als basis.
+- wettenbank_wijzigingen is handig voor impact-analyse: als art. 9 IW 1990 wijzigt, kun je automatisch alle annotaties flaggen die mogelijk verouderd zijn.
+- CC-0 data: alle overheidspublicaties op wetten.overheid.nl vallen onder de open licentie van KOOP — hergebruik zonder beperkingen.
+-->
 
 ---
 
@@ -514,6 +598,17 @@ Elke aanroep retourneert een **peildatum**. Versies zijn opvraagbaar op elke dat
 
 </div>
 </div>
+
+<!--
+Wat je zegt:
+"De architectuur is opzettelijk simpel. Claude Code start de MCP-server als een subprocess en wisselt JSON-berichten uit via stdin en stdout — geen netwerk, geen poorten. De server vertaalt die aanvragen naar CQL-queries richting de SRU-interface van de overheid, haalt de XML op, parsed die, en geeft Markdown terug."
+
+Achtergrond:
+- StdIO-transport is de eenvoudigste MCP-transportmodus: de AI en de server draaien op dezelfde machine en communiceren via standaard input/output. Alternatief is HTTP/SSE voor remote servers.
+- CQL (Contextual Query Language) is de querytaal van SRU. Voorbeelden: dcterms.identifier = BWBR0004770 om een specifieke wet op te zoeken.
+- De BWB-toestand XML is het formaat waarin wetten.overheid.nl de actuele versie van een wet aanbiedt. Het schema (toestand_2016-1.xsd) is openbaar en definieert de structuur van artikelen, leden en onderdelen.
+- Historische versies zijn opvraagbaar door een datum mee te geven in de SRU-aanroep. Dit is essentieel voor juridische reproduceerbaarheid: een analyse op peildatum 2024-01-01 moet later nog verifieerbaar zijn.
+-->
 
 ---
 
@@ -552,6 +647,17 @@ Elke aanroep retourneert een **peildatum**. Versies zijn opvraagbaar op elke dat
 </div>
 </div>
 
+<!--
+Wat je zegt:
+"De volledige datapipeline van aanvraag tot Markdown in vijf stappen. Het meest interessante is stap 4: de XML-parser is geconfigureerd op basis van het XSD-schema van de overheid. Elementen die meerdere keren kunnen voorkomen — artikelen, leden, lijstitems — worden als array behandeld. Dat maakt de DOM-traversal betrouwbaar."
+
+Achtergrond:
+- DOM-traversal in dit geval is XML DOM — de parser bouwt een boomstructuur van de wet en de code loopt die boom af op zoek naar het juiste artikelelement.
+- maxOccurs="unbounded" in XSD betekent dat een element nul of meer keer mag voorkomen. Zonder die configuratie zou de XML-parser soms een enkelvoudig element als object teruggeven en soms als array, wat de code zou breken.
+- De regex-fallback is een vangnet voor gevallen waar de XML-structuur afwijkt van het verwachte schema (zeldzaam, maar het komt voor bij oudere wetten).
+- wetParser.parse() is een interne functie in src/index.ts — het kernbestand van 633 regels dat de hele server implementeert.
+-->
+
 ---
 
 ## Gerichte artikelophaling
@@ -582,6 +688,16 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 
 > De SRU-interface doorzoekt met `trefwoord` alleen metadata, niet de wetstekst zelf. De twee-staps aanpak omzeilt dit.
 
+<!--
+Wat je zegt:
+"Dit is een praktisch punt dat de betrouwbaarheid van de tool sterk beïnvloedt. De Awb heeft meer dan 300 artikelen — als je die volledig ophaalt, vult dat het contextvenster van de AI. Dat leidt tot afgeknotte tekst en missende informatie. De `artikel`-parameter haalt precies één XML-node op, ongeacht hoe groot de wet is."
+
+Achtergrond:
+- Een contextvenster van een AI-model heeft een maximale capaciteit in tokens (circa 200.000 voor Claude). De volledige Awb in tekst overschrijdt dat ruimschoots. Gerichte opvraging is daarom geen luxe maar noodzaak.
+- De SRU-interface doorzoekt metadata, niet de wetstekst zelf. Dat is een beperking van het zoeksysteem van KOOP. De twee-staps aanpak (eerst BWB-id ophalen via metazoekopdracht, dan wetstekst doorzoeken via regex) omzeilt dit.
+- Dit is ook de reden waarom in CLAUDE.md expliciet staat: gebruik altijd wettenbank_ophalen voor inhoudelijke zoekopdrachten, nooit wettenbank_zoek met alleen een trefwoord.
+-->
+
 ---
 
 <!-- _class: sectie -->
@@ -589,6 +705,11 @@ Stap 2: Volledige tekst downloaden → trefwoord zoeken met contextfragmenten
 
 # Deel 3
 ## JAS — Juridisch Analyseschema
+
+<!--
+Wat je zegt:
+"Dan het tweede onderdeel: JAS — het Juridisch Analyseschema."
+-->
 
 ---
 
@@ -630,6 +751,20 @@ Elk zinsdeel wordt **letterlijk geciteerd** — nooit geparafraseerd.
 </div>
 </div>
 
+<!--
+Wat je zegt:
+"JAS is een standaard van het Ministerie van BZK uit 2024, gebaseerd op de juridische categorietheorie van Hohfeld. Het classificeert elk zinsdeel van een wetsbepaling in een van dertien elementen — van rechtssubject en rechtsbetrekking tot delegatiebevoegdheid en parameter. Het bijzondere is dat elk element via drie methoden wordt geïnterpreteerd: grammaticaal, systematisch en teleologisch."
+
+Achtergrond:
+- Wesley Newcomb Hohfeld (1879–1918) was een Amerikaanse jurist die een taxonomie ontwikkelde voor juridische relaties: rechten, plichten, bevoegdheden, immuniteiten — en hun correlatieven en tegengestelden. JAS bouwt hierop voort.
+- MinBZK-standaard: het Ministerie van Binnenlandse Zaken en Koninkrijksrelaties werkt aan de digitalisering van wetgeving via het programma Wetsanalyse en -implementatie. JAS is een uitkomst van dat werk.
+- Grammaticale interpretatie: wat zegt de tekst letterlijk?
+  Systematische interpretatie: hoe verhoudt dit artikel zich tot andere bepalingen in dezelfde wet of verwante wetten?
+  Teleologische interpretatie: wat was het doel van de wetgever (ratio legis)?
+- "Elk zinsdeel wordt letterlijk geciteerd" is een bewuste kwaliteitseis: parafrase introduceert interpretatiebias. De AI mag niet samenvatten — alleen citeren en labelen.
+- De kleuren van de badges zijn gebaseerd op de officiële JAS-kleurcodering uit `.claude/skills/jas/kaders.md`.
+-->
+
 ---
 
 ## De JAS-workflow: stap 0 tot 8
@@ -652,13 +787,95 @@ Stap 3 is conditioneel voor IW 1990 én UB IW 1990; stap 7 uitsluitend voor de I
 
 </div>
 
+<!--
+Wat je zegt:
+"De workflow heeft negen stappen. Stap 0 is hergebruik: als er al een annotatie bestaat in de analyses/-map wordt die eerst gecontroleerd op peildatum. Stap 2 en 4 worden parallel uitgevoerd — dat scheelt tijd. Stap 3 en 7 zijn conditioneel: die Awb-check is alleen relevant bij de Invorderingswet en het Uitvoeringsbesluit, niet bij andere wetten."
+
+Achtergrond:
+- Stap 0 — Hergebruik: Voorkomen dat een al bestaande analyse opnieuw wordt gemaakt bij hetzelfde artikel. De bestandsnaam bevat een timestamp, waarmee je kunt zien of de peildatum nog actueel is.
+- Art. 1 lid 2 IW 1990 (stap 3 en 7): dit lid bepaalt dat de Awb van toepassing is op de invordering, tenzij de IW 1990 anders bepaalt. Het is dus de sleutelcruciale bepaling voor Awb-toepasselijkheid — elke JAS-analyse van een IW-artikel moet hier langs.
+- Leidraad Invordering (stap 3): de Leidraad is niet gecodificeerd in wet, maar is een beleidsregel die de Belastingdienst bindt. Per artikel van de IW 1990 bestaat een corresponderende sectie in de Leidraad.
+- Stap 6 — Formaliseren: Beslisregels worden geschreven als IF [voorwaarde] THEN [rechtsgevolg], rekenregels als formules (bijv. Termijn = 6 weken na dagtekening). Dit is directe invoer voor ICT-kennismodellen.
+-->
+
 ---
 
 <!-- _class: sectie -->
 <!-- _backgroundColor: #003082 -->
 
 # Deel 4
+## Skills-architectuur
+
+<!--
+Wat je zegt:
+"Voordat we het concrete resultaat bekijken, een toelichting op de manier waarop de workflow technisch is georganiseerd — en waarom dat uitmaakt."
+-->
+
+---
+
+## Skills: modulaire opbouw met token-isolatie
+
+<div class="columns">
+<div>
+
+### Oude situatie: commands
+Eén groot promptbestand (400+ regels) geladen in de hoofdcontext. MCP-data, wetstekst en annotatie stapelden op — contextvenster raakte vol.
+
+```
+.claude/skills/
+├── jas.md       # alles in één bestand
+└── wetzoek.md   # alles in één bestand
+```
+
+</div>
+<div>
+
+### Nieuwe situatie: skills
+Drie gerichte bestanden per skill, uitgevoerd in een **geïsoleerde fork-context**. De hoofdconversatie ziet alleen het bestandspad van het rapport.
+
+```
+.claude/skills/
+├── jas/
+│   ├── SKILL.md         # werkwijze
+│   ├── kaders.md        # JAS-taxonomie
+│   └── rapportformat.md # §1–§11 + checklist
+└── wetzoek/
+    ├── SKILL.md
+    └── rapportformat.md
+```
+
+</div>
+</div>
+
+<div class="highlight">
+
+**`context: fork`** — de volledige skill-executie (MCP-aanroepen, wetstekst, annotatie) vindt plaats in een geïsoleerde context. Zodra de skill klaar is, geeft die alleen het opgeslagen bestandspad terug. De hoofdconversatie blijft schoon.
+
+</div>
+
+<!--
+Wat je zegt:
+"De sleutelverbetering is `context: fork`. Elke keer dat je /jas aanroept, wordt de skill uitgevoerd in een volledig geïsoleerde context. De honderden KB aan wetstekst, MCP-responses en tussenliggende analyses verdwijnen na afloop — de hoofdconversatie ziet alleen het pad naar het opgeslagen rapport. Dat houdt het contextvenster schoon voor langere werksessies."
+
+Achtergrond:
+- `context: fork` is een frontmatter-sleutel in Claude Code skills. Het instrueert de harness om de skill als een subproces te draaien met een eigen contextvenster.
+- Progressive disclosure: de skill laadt bij aanvang SKILL.md (werkwijze), kaders.md (taxonomie) en rapportformat.md (format). Die bestanden worden dus alleen geladen als de skill daadwerkelijk wordt uitgevoerd — niet bij elke conversatie.
+- Het proof-of-concept (Fase 0 van de migratie) bestond uit een minimale testskill die een bestand las via `$CLAUDE_SKILL_DIR` en schreef naar `analyses/`. Dit verifieerde: (1) dat `context: fork` werkt, (2) dat padverwijzingen kloppen, (3) dat de geforkte agent schrijftoegang heeft naar de juiste map.
+- Token-effect: voor /jas betekent dit dat ~400 regels instructies + alle MCP-data + de annotatie zelf (~7000 woorden) niet meer in de hoofdcontext hoeven. Alleen het eindresultaat (bestandspad) komt terug.
+-->
+
+---
+
+<!-- _class: sectie -->
+<!-- _backgroundColor: #003082 -->
+
+# Deel 5
 ## Concreet resultaat: Art. 9 IW 1990
+
+<!--
+Wat je zegt:
+"Laten we kijken wat dat concreet oplevert. Ik gebruik Art. 9 IW 1990 als voorbeeld — de betalingstermijnen."
+-->
 
 ---
 
@@ -700,6 +917,19 @@ Artikel 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. **12 lede
 </div>
 </div>
 
+<!--
+Wat je zegt:
+"Art. 9 IW 1990 regelt wanneer een belastingaanslag invorderbaar is. Het heeft 12 leden. De workflow produceerde 57 annotaties, 14 beslisregels, 3 rekenregels, en identificeerde 4 spanningsvelden en 3 lacunes. Die lacunes zijn plekken waar de wet iets niet regelt maar dat logischerwijs wel zou moeten."
+
+Achtergrond:
+- Art. 9 IW 1990 in het kort: Een belastingaanslag is invorderbaar zes weken na de dagtekening van het aanslagbiljet (lid 1). Er zijn uitzonderingen: conserverende aanslagen, naheffingsaanslagen, enz. De latere leden regelen specifieke gevallen (motorrijtuigenbelasting, betalingstermijnen in termijnen, enz.).
+- Beslisregel (BR): een IF-THEN-constructie die een juridische keuze formuleert. Voorbeeld: BR-1: ALS belastingaanslag is opgelegd DAN is de aanslag invorderbaar 6 weken na dagtekening.
+- Rekenregel: een formule voor termijnberekening. Voorbeeld: N = 12 - M (bij betaling in maandelijkse termijnen: als aanslag in maand M wordt opgelegd, zijn nog 12-M termijnen beschikbaar).
+- Spanningsveld: een bepaling die in spanning staat met een andere bepaling, bijvoorbeeld een kortere termijn in Art. 9 vs. een langere termijn in de Awb.
+- Lacune: een situatie die de wet niet regelt maar logischerwijs zou moeten regelen — juridische leemte.
+- De 4 interne kruisverwijzingen (§7.1) verwijzen alle naar art. 2 IW 1990 (definitiebepalingen). De 4 externe verwijzingen (§7.2) zijn naar: Wet BPM 1992, Wet belasting zware motorrijtuigen, het Douanewetboek van de Unie (EU-Vo.), en de Algemene termijnenwet (die art. 9 lid 10 uitdrukkelijk uitsluit).
+-->
+
 ---
 
 ## Rapport-structuur: 11 secties + 2 bijlagen
@@ -737,12 +967,24 @@ Rapport Art. 9 IW 1990: **~7 300 woorden**, automatisch gegenereerd, opgeslagen 
 
 </div>
 
+<!--
+Wat je zegt:
+"Het rapport volgt altijd dezelfde structuur: 11 secties en twee bijlagen. Dat maakt rapporten over verschillende artikelen vergelijkbaar. Sectie 1 is altijd de letterlijke wetstekst — geen parafrase, geen samenvatting. Sectie 9 bevat de juridische analyse via de drie interpretatiemethoden. Sectie 11 sluit af met conclusies en onzekerheden."
+
+Achtergrond:
+- De vaste structuur is bewust: het maakt peer-review mogelijk. Collega's die een rapport lezen weten waar ze moeten kijken voor specifieke informatie.
+- §2 Structuurdiagram: een schematische weergave van de relaties tussen de leden van het artikel — welk lid een uitzondering vormt op welk lid, welk lid een definitie geeft.
+- §8 Beleidskader: hier wordt de Leidraad Invordering geciteerd. Dit is de enige sectie waar beleidsregels (niet wet) aan bod komen — bewust gescheiden van de juridische analyse in §9.
+- Bijlage A bevat alle geraadpleegde wetsteksten (letterlijk geciteerd met peildatum). Bijlage B bevat de bronnenlijst (MCP-aanroepen en resulterende documenten).
+- Het rapport is opgeslagen als Markdown — dit maakt het versiebaar in Git, doorzoekbaar en bruikbaar als invoer voor andere tools.
+-->
+
 ---
 
 <!-- _class: sectie -->
 <!-- _backgroundColor: #003082 -->
 
-# Deel 5
+# Deel 6
 ## Meerwaarde & volgende stappen
 
 ---
@@ -760,6 +1002,16 @@ Rapport Art. 9 IW 1990: **~7 300 woorden**, automatisch gegenereerd, opgeslagen 
 | Kwaliteitsconsistentie | Afhankelijk van analist | 14 vaste kwaliteitseisen, geen parafrase |
 | Versie-informatie | Ontbreekt vaak | Peildatum uit MCP, altijd vermeld |
 
+<!--
+Wat je zegt:
+"De meerwaarde is op meerdere dimensies. Doorlooptijd is het meest zichtbaar — van uren naar minuten. Maar de andere dimensies zijn minstens zo waardevol: consistentie, reproduceerbaarheid, peildatumbeheer. Het rapport bevat altijd de datum waarop de wetstekst is opgehaald. Bij een wetswijziging weet je precies welke analyses zijn gebaseerd op de oude versie."
+
+Achtergrond:
+- "Vaste kwaliteitseisen" verwijst naar de pre-save checklist in `.claude/skills/jas/rapportformat.md`. Voorbeelden: letterlijk citeren (geen parafrase), alle 13 JAS-elementen beoordelen, peildatum uit MCP vermelden, alle kruisverwijzingen volgen. De checklist wordt doorlopen vóór elk rapport wordt opgeslagen.
+- Reproduceerbaarheid is juridisch essentieel: als een rechter of bezwaarmaker vraagt op welke wettekst een besluit is gebaseerd, moet je dat kunnen aantonen. De peildatum in het rapport maakt dat mogelijk.
+- Ad-hoc Awb-check vs. systematisch: zonder de workflow vergeten juristen soms te controleren of art. 1 lid 2 IW 1990 de Awb uitsluit of beperkt voor het specifieke geval. De workflow doet dit altijd.
+-->
+
 ---
 
 ## Projectstructuur
@@ -772,17 +1024,32 @@ wetten overheid/
 │   └── package.json
 │
 ├── analyses/                 # Gegenereerde rapporten
-│   └── jas-annotatie-art9-IW1990-2026-04-04_21-19-24.md
+│   └── jas-annotatie-art9-IW1990-2026-04-08_09-57-10.md
 │
 ├── presentaties/             # Deze presentatie
 │
-├── CLAUDE.md                 # Werkafspraken + BWB-quickref
-├── jas-kaders.md             # JAS v1.0.10 — 13 elementen + herkenningsvragen
-├── jas-workflow.md           # Volledige workflow-documentatie
-└── .claude/commands/
-    ├── jas.md                # /jas commando (artikel-annotatie)
-    └── wetzoek.md            # /wetzoek commando (termanalyse)
+├── CLAUDE.md                 # Rol + betrouwbaarheidsregels (~30 regels)
+└── .claude/skills/
+    ├── jas/
+    │   ├── SKILL.md          # /jas skill — werkwijze (context:fork)
+    │   ├── kaders.md         # JAS v1.0.10 — 13 elementen + taxonomie
+    │   └── rapportformat.md  # §1–§11 format + pre-save checklist
+    └── wetzoek/
+        ├── SKILL.md          # /wetzoek skill — werkwijze (context:fork)
+        └── rapportformat.md  # §1–§5 format + pre-save checklist
 ```
+
+<!--
+Wat je zegt:
+"De projectstructuur is compact. De MCP-server is één TypeScript-bestand van 633 regels. De gegenereerde rapporten komen in de analyses/-map. De instructies voor de AI zitten in CLAUDE.md en de twee command-bestanden. Dat is het."
+
+Achtergrond:
+- src/index.ts is de volledige MCP-server — bewust één bestand gehouden voor onderhoudbaarheid en leesbaarheid.
+- src/index.test.ts bevat unit tests geschreven met Vitest (een moderne, snelle JavaScript-testrunner die compatibel is met de Vite-toolchain).
+- CLAUDE.md is uitgedund van ~66 naar ~30 regels: MCP-strategie en BWB-ids zijn verhuisd naar de skills, die informatie is alleen nodig bij uitvoering van /jas of /wetzoek.
+- .claude/skills/ bevat de skills — modulaire promptmodules die Claude Code uitvoert in een geïsoleerde context (context:fork). Elk skill-pakket bestaat uit drie lagen: werkwijze (SKILL.md), domeinkennis (kaders.md / rapportformat.md), en kwaliteitseisen.
+- De pre-save checklist in rapportformat.md is een verplichte doorlooplijst vóór opslaan — garandeert dat alle secties zijn ingevuld en kwaliteitseisen zijn gehaald.
+-->
 
 ---
 
@@ -809,6 +1076,17 @@ Rapporten zijn Markdown — versiebaar in Git, deelbaar en peer-reviewbaar. De M
 </div>
 </div>
 
+<!--
+Wat je zegt:
+"Er zijn drie logische vervolgstappen. Ten eerste uitbreiden naar meer wetten — de workflow werkt al voor elke wet met een BWB-id. Ten tweede de JAS-output gebruiken als invoer voor een ICT-kennismodel. En ten derde samenwerking — de rapporten zijn Markdown, versiebaar in Git, en de MCP-server werkt ook in Claude Desktop en Gemini CLI."
+
+Achtergrond:
+- Kennismodel: De Belastingdienst en andere overheidsorganisaties werken aan formele kennismodellen van wetgeving — vaak in RegelSpraak (een Nederlandse regelspecificatietaal) of DMN (Decision Model and Notation). JAS-annotaties bevatten al de bouwstenen: beslisregels in IF-THEN-formaat, parameters met waarden, rekenregels als formules.
+- wettenbank_wijzigingen: Dit MCP-tool geeft een lijst van wetten die zijn gewijzigd sinds een opgegeven datum. Dat maakt het mogelijk om na elke wetswijziging automatisch te checken welke bestaande annotaties mogelijk verouderd zijn.
+- Claude Desktop is de desktopapplicatie van Anthropic — ook die ondersteunt MCP-servers. Gemini CLI is Googles command-line interface voor Gemini-modellen, die eveneens het MCP-protocol ondersteunt.
+- Git-versiebeheer van de rapporten maakt diff-analyse mogelijk: bij een wetswijziging zie je exact welke elementen van de annotatie zijn veranderd.
+-->
+
 ---
 
 <!-- _class: lead -->
@@ -821,3 +1099,25 @@ Rapporten zijn Markdown — versiebaar in Git, deelbaar en peer-reviewbaar. De M
 Een artikel annoteren in real-time — van wetstekst naar volledig rapport.
 
 **Belastingdienst — Domein Inning**
+
+<!--
+Wat je zegt:
+"Dan nu een live demo. Ik annoteer Art. 25 IW 1990 — dat is het artikel over uitstel van betaling — in real-time. Van wetstekst naar volledig rapport. Daarna ruimte voor vragen."
+
+Achtergrond over Art. 25 IW 1990 (demodoelwit):
+- Art. 25 IW 1990 regelt het uitstel van betaling. Het artikel is substantieel (meerdere leden), heeft kruisverwijzingen naar de Leidraad Invordering en de Awb, en kent een aantal beleidsmatige invullingen (bijv. uitstel bij bezwaar/beroep).
+- Relevante begrippen: "invorderingsambtenaar", "uitstel van betaling", "zekerheid stellen", "renteheffing", "bijzondere omstandigheden".
+- Als de demo te lang duurt: je kunt halverwege stoppen bij het genereren van §4 (JAS-annotatie) en de structuur uitleggen. Het volledige rapport kan daarna als bijlage worden gedeeld.
+
+Mogelijke vragen en antwoorden:
+- Hoe betrouwbaar is de AI?
+  De wetstekst komt rechtstreeks van wetten.overheid.nl — geen hallucinaties over de brondata. De interpretatie is structureel afgedwongen via JAS. Elke claim heeft een bronverwijzing.
+- Kan dit ook voor interne beleidsnotities?
+  Niet via de MCP (die haalt alleen publieke wetgeving op). Wel via een aangepaste MCP-server die interne documenten ontsluit.
+- Is dit al in gebruik?
+  Dit is een proof-of-concept gebouwd voor Domein Inning. De workflow is operationeel en getest op meerdere artikelen.
+- Wat kost het?
+  De MCP-server is open source, de data is CC-0. Kosten zitten alleen in het Claude-gebruik (API of Claude Code licentie).
+- Werkt dit ook voor jurisprudentie?
+  Niet via deze MCP — die haalt alleen wetgeving op. Uitbreiding naar rechtspraak.nl is technisch mogelijk maar vereist een aparte server.
+-->
