@@ -7,13 +7,20 @@ Werkruimte voor gestructureerde wetsanalyse op het domein **invordering van rijk
 ## Wat zit er in deze repo?
 
 ```
-wettenbank-mcp/              MCP-server: koppelt Claude aan wetten.overheid.nl
-analyses/                    Gegenereerde wetsanalyserapporten en JAS-annotaties
-jas-kaders.md                JAS v1.0.10 — definitie van alle 13 annotatiekaders (referentie)
-CLAUDE.md                    Werkafspraken voor Claude (rol, MCP-strategie)
-.claude/commands/wetzoek.md  Workflow + kwaliteitseisen + rapportformat voor /wetzoek
-.claude/commands/jas.md      Workflow + kwaliteitseisen + rapportformat voor /jas
+wettenbank-mcp/                    MCP-server: koppelt Claude aan wetten.overheid.nl
+analyses/                          Gegenereerde wetsanalyserapporten en JAS-annotaties
+CLAUDE.md                          Werkafspraken voor Claude (rol, betrouwbaarheidsregels)
+.claude/skills/
+  jas/
+    SKILL.md                       /jas skill — werkwijze stap 0–10, MCP-strategie (context:fork)
+    kaders.md                      JAS v1.0.10 — 13 annotatiekaders + taxonomie
+    rapportformat.md               §1–§11 structuur + pre-save checklist
+  wetzoek/
+    SKILL.md                       /wetzoek skill — werkwijze stap 0–9 (context:fork)
+    rapportformat.md               §1–§5 structuur + pre-save checklist
 ```
+
+De skills draaien in een geïsoleerde fork-context (`context: fork`): alle MCP-aanroepen, wetstekst en analyse blijven buiten de hoofdconversatie. De hoofdconversatie ontvangt alleen het bestandspad van het opgeslagen rapport.
 
 ---
 
@@ -54,7 +61,7 @@ Voeg toe aan `claude_desktop_config.json` (Claude Desktop) of aan `.claude/setti
 
 ## Wetsanalyse met `/wetzoek`
 
-Het slash-commando `/wetzoek` doorzoekt automatisch vijf kernbronnen en genereert een volledig gestructureerd rapport:
+De skill `/wetzoek` doorzoekt automatisch vijf kernbronnen en genereert een volledig gestructureerd rapport:
 
 ```
 /wetzoek termijnen
@@ -88,12 +95,13 @@ Rapporten worden opgeslagen in [`analyses/`](./analyses/) met de naamconventie `
 
 ## Juridisch Analyseschema (JAS)
 
-Wetsartikelen kunnen worden geannoteerd volgens het **Juridisch Analyseschema v1.0.7** (MinBZK, 2024), gebaseerd op de theorie van Wesley Newcomb Hohfeld.
+Wetsartikelen kunnen worden geannoteerd volgens het **Juridisch Analyseschema v1.0.10** (MinBZK, 2024), gebaseerd op de theorie van Wesley Newcomb Hohfeld.
 
 Het JAS maakt interpretatie- en preciseringskeuzes traceerbaar en vormt de basis voor ICT-implementatie van regelgeving.
 
-- **Annotatiekaders**: [`jas-kaders.md`](./jas-kaders.md) — alle 13 JAS-elementen met definities en herkenningsvragen
-- **Workflow + rapportformat**: [`.claude/commands/jas.md`](./.claude/commands/jas.md)
+- **Annotatiekaders**: [`.claude/skills/jas/kaders.md`](./.claude/skills/jas/kaders.md) — alle 13 JAS-elementen met definities en herkenningsvragen
+- **Workflow**: [`.claude/skills/jas/SKILL.md`](./.claude/skills/jas/SKILL.md)
+- **Rapportformat + checklist**: [`.claude/skills/jas/rapportformat.md`](./.claude/skills/jas/rapportformat.md)
 - **Voorbeeldannotaties**: zie [`analyses/`](./analyses/)
 
 ---
