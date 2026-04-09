@@ -316,17 +316,27 @@ function zoekArtikelInDom(
   return null;
 }
 
-function formatLijst(lijst: Record<string, unknown>): string[] {
+function formatLijst(lijst: Record<string, unknown>, diepte = 0): string[] {
+  const indent = "   ".repeat(diepte + 1);
   const items = Array.isArray(lijst.li) ? lijst.li : (lijst.li ? [lijst.li] : []);
-  return (items as Record<string, unknown>[]).map((li) => {
-    const linr = li["li.nr"] != null ? String(li["li.nr"]) : "";
+  const lines: string[] = [];
+  for (const li of items as Record<string, unknown>[]) {
+    const linr = li["li.nr"] != null ? getNrValue(li["li.nr"]) : "";
     const al = li.al != null ? renderAl(getAlText(li.al)) : "";
-    return `   ${linr} ${al}`.trimEnd();
-  });
+    lines.push(`${indent}${linr} ${al}`.trimEnd());
+    // Geneste <lijst> binnen <li> (bijv. sub-onderdelen 1°, 2°)
+    if (li.lijst) {
+      const sublijsten = Array.isArray(li.lijst) ? li.lijst : [li.lijst];
+      for (const sub of sublijsten as Record<string, unknown>[]) {
+        lines.push(...formatLijst(sub, diepte + 1));
+      }
+    }
+  }
+  return lines;
 }
 
 function formatLidNode(lid: Record<string, unknown>, parts: string[]): void {
-  const lidnr = lid.lidnr != null ? stripXml(String(lid.lidnr)) : "";
+  const lidnr = lid.lidnr != null ? getNrValue(lid.lidnr) : "";
   const prefix = lidnr ? `${lidnr}. ` : "";
   if (lid.al != null) {
     const als = Array.isArray(lid.al) ? lid.al : [lid.al];
