@@ -169,7 +169,14 @@
   <p id="tool-description" class="hidden text-xs text-gray-500 italic leading-relaxed border-l-2 border-gray-700 pl-2"></p>
 
   <div id="form-container" class="hidden">
-    <div id="form-fields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+    <div class="flex items-center justify-between pt-1.5 pb-0.5 border-t border-gray-800 mt-1">
+      <span class="text-xs text-gray-500 uppercase tracking-widest">Parameters</span>
+      <button id="form-collapse-btn"
+        title="Invoervelden inklappen"
+        class="flex items-center justify-center w-5 h-5 text-gray-600 hover:text-gray-400 text-xs"
+        onclick="toggleForm()">▾</button>
+    </div>
+    <div id="form-fields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1"></div>
   </div>
 </div>
 
@@ -355,6 +362,23 @@ function toggleStream() {
     streamPane.style.height = streamPane._savedH ? streamPane._savedH + 'px' : STREAM_DEFAULT_H + 'px';
     btn.textContent = '▾';
     btn.title = 'Minimaliseren';
+  }
+}
+
+// ── Form collapse ─────────────────────────────────────────────────────────
+let formCollapsed = false;
+function toggleForm() {
+  formCollapsed = !formCollapsed;
+  const btn = $('form-collapse-btn');
+  const fields = $('form-fields');
+  if (formCollapsed) {
+    fields.style.display = 'none';
+    btn.textContent = '▸';
+    btn.title = 'Invoervelden uitklappen';
+  } else {
+    fields.style.display = '';
+    btn.textContent = '▾';
+    btn.title = 'Invoervelden inklappen';
   }
 }
 
