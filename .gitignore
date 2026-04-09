@@ -1,6 +1,8 @@
 # Node
 wettenbank-mcp/node_modules/
 wettenbank-mcp/dist/
+mcp-debugger/node_modules/
+mcp-debugger/dist/
 
 # Lokale Claude Code instellingen (machine-specifiek)
 .claude/settings.local.json
