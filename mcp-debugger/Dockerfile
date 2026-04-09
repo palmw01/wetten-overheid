@@ -35,8 +35,8 @@ COPY --from=wettenbank-builder /wettenbank/node_modules ./wettenbank-mcp/node_mo
 RUN mkdir -p /app/config /app/logs && chown -R app:app /app
 USER app
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
+  CMD node -e "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
