@@ -3,7 +3,9 @@ name: Build & Push MCP Debugger
 on:
   push:
     branches: [master]
-    paths: ["mcp-debugger/**"]
+    paths:
+      - "mcp-debugger/**"
+      - "wettenbank-mcp/src/**"
 
 jobs:
   build-push:
@@ -26,6 +28,7 @@ jobs:
       - name: Build & Push image
         uses: docker/build-push-action@v5
         with:
-          context: ./mcp-debugger
+          context: .
+          file: ./mcp-debugger/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/wetten-overheid:latest
