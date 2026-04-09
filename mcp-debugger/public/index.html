@@ -445,9 +445,10 @@ function buildForm(schema) {
     let el;
 
     if (def.type === 'boolean') {
+      wrap.className = 'flex flex-row items-center gap-2';
       el = document.createElement('input');
       el.type = 'checkbox'; el.checked = def.default !== false;
-      el.className = 'w-4 h-4 accent-blue-500 mt-1';
+      el.className = 'w-4 h-4 accent-blue-500';
       el.dataset.type = 'boolean';
     } else if (def.type === 'number' || def.type === 'integer') {
       el = document.createElement('input');
