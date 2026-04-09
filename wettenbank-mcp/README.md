@@ -1,6 +1,6 @@
 # Wettenbank MCP — Documentatie
 
-**Versie:** 1.0.0  
+**Versie:** 2.0.1  
 **Taal:** TypeScript (ESM)  
 **Transportprotocol:** StdIO (MCP)  
 **Databron:** wetten.overheid.nl — publieke SRU-interface (CC-0, geen API-sleutel vereist)
@@ -123,8 +123,8 @@ Haalt één artikel op uit een regeling via BWB-id en artikelnummer. De response
 | Parameter   | Type   | Verplicht | Omschrijving                                                               |
 |-------------|--------|:---------:|----------------------------------------------------------------------------|
 | `bwbId`     | string | **ja**    | BWB-id van de regeling, bijv. `BWBR0004770`                                |
-| `artikel`   | string | **ja**    | Artikelnummer, bijv. `"25"` (IW 1990) of `"3:40"` (Awb). Gebruik `"N.M"`-notatie om één lid op te vragen: `"9.1"` haalt artikel 9, lid 1 op. |
-| `peildatum` | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)              |
+| `artikel`   | string | **ja**    | Artikelnummer, bijv. `"25"` (IW 1990) of `"3:40"` (Awb). Gebruik `"N.M"`-notatie om één lid op te vragen: `"9.1"` haalt artikel 9, lid 1 op.  |
+| `peildatum` | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)               |
 
 **Gegevensflow:**
 
@@ -157,7 +157,7 @@ Artikel 9 Betalingstermijnen
 Bronreferentie: jci1.3:c:BWBR0004770&artikel=9
 ```
 
-De header gebruikt de `<citeertitel>` en `inwerkingtredingsdatum` uit de BWB-toestand XML; bij ontbreken wordt de SRU-metadata gebruikt. Als het artikel de status `"vervallen"` heeft, verschijnt een `⚠️`-waarschuwing boven de tekst.
+De header gebruikt de `<citeertitel>` en het `inwerkingtreding`-attribuut uit de BWB-toestand XML; bij ontbreken wordt de SRU-metadata gebruikt. Als het artikel de status `"vervallen"` heeft, verschijnt een `⚠️`-waarschuwing boven de tekst.
 
 Geeft `Artikel <nr> niet gevonden in deze wet.` als het artikelnummer niet bestaat.
 
@@ -177,7 +177,7 @@ Zoekt welke artikelen een begrip bevatten en retourneert een gesorteerde lijst m
 
 **Wildcard:** via `bouwTermPatroon()` — `"termijn*"` → regex `termijn\w*`. Speciale tekens worden eerst geescapet via `escapeerRegex()`.
 
-**Zoekstrategie:** DOM-gebaseerd via `zoekTermInArtikelDom()` — de term wordt per artikel-node gezocht in de `<al>`-, `<lid>`- en `<lijst>`-tekst. Artikel-grenzen komen uit de XML-structuur, niet uit tekstpatronen. Dit voorkomt false positives vanuit inhoudsopgaven en kruisverwijzingen.
+**Zoekstrategie:** DOM-gebaseerd via `zoekTermInArtikelDom()` — de term wordt per artikel-node gezocht in de `<al>`-, `<lid>`- en `<lijst>`-tekst. Geneste `<lijst>`-nodes (sub-lijsten) worden recursief doorzocht via `telInLijst()`. Artikel-grenzen komen uit de XML-structuur, niet uit tekstpatronen. Dit voorkomt false positives vanuit inhoudsopgaven en kruisverwijzingen.
 
 **Resultaatformaat:**
 
@@ -249,7 +249,7 @@ searchRetrieveResponse
 | `extraheerArtikelUitXml()`  | ja            | DOM-gebaseerde artikel-extractie uit BWB-toestand XML (primair)         |
 | `extraheerArtikel()`        | ja            | Regex-gebaseerde artikel-extractie uit platte tekst (fallback)          |
 | `detecteerArtikelStatus()`  | ja            | Controleert `@_status` op de artikel-node; geeft waarschuwing bij `"vervallen"` |
-| `zoekTermInArtikelDom()`    | ja            | DOM-gebaseerde term-zoekfunctie voor `wettenbank_zoekterm`; per artikel-node, niet op platte tekst |
+| `zoekTermInArtikelDom()`    | ja            | DOM-gebaseerde term-zoekfunctie voor `wettenbank_zoekterm`; per artikel-node; zoekt recursief in geneste `<lijst>`-nodes via interne helper `telInLijst()` |
 | `extraheerDocMetadata()`    | ja            | Haalt `citeertitel` en `inwerkingtredingsdatum` op uit de BWB-toestand DOM |
 | `bouwJciUri()`              | ja            | Construeert JCI-uri: `jci1.3:c:<bwbId>&artikel=<nr>`                   |
 | `vindArtikelContext()`      | ja            | Zoekt dichtstbijzijnde artikelkop vóór een matchpositie in platte tekst (niet gebruikt door zoekterm) |
@@ -478,8 +478,8 @@ Alle geëxporteerde functies zijn gedekt door unit tests in `src/index.test.ts`:
 | `extraheerArtikel`                | Artikel op nummer; dubbele punt (Awb); null-fallback; metadata stripping            |
 | `extraheerArtikelUitXml`          | Reguliere wet; Awb (`:` in nr); Leidraad (`circulaire.divisie`); subartikel; structuurprefix; depth-limit; lege XML |
 | `detecteerArtikelStatus`          | Null bij "geldend"; waarschuwing bij "vervallen"; null bij lege XML                 |
-| `zoekTermInArtikelDom`            | Juist artikel; meerdere treffers; lege array; kruisverwijzing telt bij bronartikelen; wildcard; `<lid>`-tekst |
-| `extraheerDocMetadata`            | Citeertitel + versiedatum uit `<toestand>`-structuur; lege strings als structuur ontbreekt |
+| `zoekTermInArtikelDom`            | Juist artikel; meerdere treffers; lege array; kruisverwijzing telt bij bronartikelen; wildcard; `<lid>`-tekst; geneste `<lijst>`-nodes (sub-lijsten) |
+| `extraheerDocMetadata`            | Citeertitel + versiedatum (`inwerkingtreding`-attribuut) uit `<toestand>`-structuur; lege strings als structuur ontbreekt |
 | `parseRecords`                    | Leeg resultaat; enkelvoudig record; meerdere rechtsgebieden; twee records           |
 | `formatRegelingen`                | Lege lijst; BWB-id/titel aanwezig; oplopende nummering; titel-fallback              |
 | `dedupliceerOpBwbId`              | Unieke ids; meest recente versie bewaren; lege invoer; gemengde invoer              |

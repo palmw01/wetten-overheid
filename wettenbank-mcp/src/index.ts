@@ -340,7 +340,7 @@ function formatLidNode(lid: Record<string, unknown>, parts: string[]): void {
   const prefix = lidnr ? `${lidnr}. ` : "";
   if (lid.al != null) {
     const als = Array.isArray(lid.al) ? lid.al : [lid.al];
-    for (const al of als) parts.push(prefix + renderAl(getAlText(al)));
+    als.forEach((al, i) => parts.push((i === 0 ? prefix : "") + renderAl(getAlText(al))));
   }
   if (lid.lijst) {
     const lijsten = Array.isArray(lid.lijst) ? lid.lijst : [lid.lijst];
@@ -480,6 +480,18 @@ export function zoekTermInArtikelDom(
     }
   }
 
+  // Doorzoekt een <lijst>-node recursief (inclusief geneste sub-lijsten).
+  function telInLijst(lijst: Record<string, unknown>, nr: string, lidnr?: string): void {
+    const items = Array.isArray(lijst.li) ? lijst.li : (lijst.li ? [lijst.li] : []);
+    for (const li of items as Record<string, unknown>[]) {
+      if (li.al != null) tel(nr, getAlText(li.al), lidnr);
+      if (li.lijst) {
+        const sublijsten = Array.isArray(li.lijst) ? li.lijst : [li.lijst];
+        for (const sub of sublijsten as Record<string, unknown>[]) telInLijst(sub, nr, lidnr);
+      }
+    }
+  }
+
   function telInArtikelNode(node: Record<string, unknown>, nr: string): void {
     // Directe <al>
     if (node.al != null) {
@@ -489,12 +501,7 @@ export function zoekTermInArtikelDom(
     // Directe <lijst> (artikel zonder lid)
     if (node.lijst) {
       const lijsten = Array.isArray(node.lijst) ? node.lijst : [node.lijst];
-      for (const lijst of lijsten as Record<string, unknown>[]) {
-        const items = Array.isArray(lijst.li) ? lijst.li : (lijst.li ? [lijst.li] : []);
-        for (const li of items as Record<string, unknown>[]) {
-          if (li.al != null) tel(nr, getAlText(li.al));
-        }
-      }
+      for (const lijst of lijsten as Record<string, unknown>[]) telInLijst(lijst, nr);
     }
     // <lid> elementen
     if (Array.isArray(node.lid)) {
@@ -506,12 +513,7 @@ export function zoekTermInArtikelDom(
         }
         if (lid.lijst) {
           const lijsten = Array.isArray(lid.lijst) ? lid.lijst : [lid.lijst];
-          for (const lijst of lijsten as Record<string, unknown>[]) {
-            const items = Array.isArray(lijst.li) ? lijst.li : (lijst.li ? [lijst.li] : []);
-            for (const li of items as Record<string, unknown>[]) {
-              if (li.al != null) tel(nr, getAlText(li.al), lidnr);
-            }
-          }
+          for (const lijst of lijsten as Record<string, unknown>[]) telInLijst(lijst, nr, lidnr);
         }
       }
     }
@@ -605,7 +607,7 @@ export interface DocMetadata {
  */
 export function extraheerDocMetadata(dom: Record<string, unknown>): DocMetadata {
   const toestand = dom["toestand"] as Record<string, unknown> | undefined;
-  const versiedatum = String(toestand?.["@_inwerkingtredingsdatum"] ?? "");
+  const versiedatum = String(toestand?.["@_inwerkingtreding"] ?? "");
   const wetgeving = toestand?.["wetgeving"] as Record<string, unknown> | undefined;
   const wetBesluit = wetgeving?.["wet-besluit"] as Record<string, unknown> | undefined;
   const regelingInfo = wetBesluit?.["regeling-info"] as Record<string, unknown> | undefined;
@@ -696,7 +698,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         "Voor meerdere artikelen: roep deze tool parallel aan per artikel. " +
         "Kernwet-ids: IW 1990 → BWBR0004770 | AWR → BWBR0002320 | Awb → BWBR0005537 | Leidraad 2008 → BWBR0024096. " +
         "Optioneel: peildatum (YYYY-MM-DD) voor een historische versie; default is vandaag. " +
-        "De response bevat de artikeltekst met structuurprefix ([Structuur: Hoofdstuk X — titel]) wanneer beschikbaar. " +
+        "De response bevat boven de artikelkop één of meer structuurregels (bijv. 'Hoofdstuk II — titel'), elk op een eigen regel. " +
         "Geeft expliciet aan als het artikel niet gevonden is.",
       inputSchema: {
         type: "object",

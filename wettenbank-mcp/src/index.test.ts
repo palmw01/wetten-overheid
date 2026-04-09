@@ -978,7 +978,7 @@ describe("detecteerArtikelStatus", () => {
 
 describe("extraheerDocMetadata", () => {
   it("extraheert citeertitel en versiedatum uit toestand-structuur", () => {
-    const xml = `<toestand inwerkingtredingsdatum="2024-01-01">
+    const xml = `<toestand inwerkingtreding="2024-01-01">
       <wetgeving>
         <wet-besluit>
           <regeling-info>
