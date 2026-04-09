@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { escapeerRegex, bouwTermPatroon, stripXml, renderAl, bouwJciUri, extraheerArtikel, extraheerArtikelUitXml, detecteerArtikelStatus, zoekTermInArtikelDom, extraheerDocMetadata, parseRecords, formatRegelingen, dedupliceerOpBwbId, haalWetstekstOp, sruRequest, vindArtikelContext, wetParser, getAlText, parseerArtikelParam } from "./index.js";
+import { escapeerRegex, bouwTermPatroon, parseZoekterm, stripXml, renderAl, bouwJciUri, extraheerArtikel, extraheerArtikelUitXml, detecteerArtikelStatus, zoekTermInArtikelDom, extraheerDocMetadata, parseRecords, formatRegelingen, dedupliceerOpBwbId, haalWetstekstOp, sruRequest, vindArtikelContext, wetParser, getAlText, parseerArtikelParam } from "./index.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,21 +85,68 @@ describe("escapeerRegex", () => {
 // ── bouwTermPatroon ──────────────────────────────────────────────────────────
 
 describe("bouwTermPatroon", () => {
-  it("geeft letterlijke term terug zonder wildcard", () => {
-    expect(bouwTermPatroon("termijn")).toBe("termijn");
+  it("exact woord: voegt woordgrenzen toe zonder wildcard", () => {
+    expect(bouwTermPatroon("termijn")).toBe("\\btermijn\\b");
   });
 
-  it("converteert wildcard * naar \\w*-suffix", () => {
-    expect(bouwTermPatroon("termijn*")).toBe("termijn\\w*");
+  it("suffix-wildcard: \\b aan het begin, \\w* aan het einde", () => {
+    expect(bouwTermPatroon("termijn*")).toBe("\\btermijn\\w*");
   });
 
-  it("escapet speciale tekens vóór de wildcard", () => {
-    expect(bouwTermPatroon("art. 9*")).toBe("art\\. 9\\w*");
+  it("prefix-wildcard: \\w* aan het begin, \\b aan het einde", () => {
+    expect(bouwTermPatroon("*termijn")).toBe("\\w*termijn\\b");
+  });
+
+  it("infix-wildcard: \\w* aan beide kanten", () => {
+    expect(bouwTermPatroon("*termijn*")).toBe("\\w*termijn\\w*");
+  });
+
+  it("escapet speciale tekens vóór de suffix-wildcard", () => {
+    expect(bouwTermPatroon("art. 9*")).toBe("\\bart\\. 9\\w*");
   });
 
   it("escapet speciale tekens zonder wildcard", () => {
-    expect(bouwTermPatroon("3:40")).toBe("3:40");
-    expect(bouwTermPatroon("25.1")).toBe("25\\.1");
+    expect(bouwTermPatroon("3:40")).toBe("\\b3:40\\b");
+    expect(bouwTermPatroon("25.1")).toBe("\\b25\\.1\\b");
+  });
+});
+
+// ── parseZoekterm ─────────────────────────────────────────────────────────────
+
+describe("parseZoekterm", () => {
+  it("enkelvoudige term geeft OF-operator met één patroon", () => {
+    const result = parseZoekterm("termijn");
+    expect("patronen" in result && result.patronen).toHaveLength(1);
+    expect("operator" in result && result.operator).toBe("OF");
+    expect("patronen" in result && result.patronen[0].source).toBe("\\btermijn\\b");
+  });
+
+  it("EN-operator splitst op ' EN ' en geeft operator EN terug", () => {
+    const result = parseZoekterm("aansprakelijk EN belasting");
+    expect("operator" in result && result.operator).toBe("EN");
+    expect("patronen" in result && result.patronen).toHaveLength(2);
+    expect("patronen" in result && result.patronen[0].source).toBe("\\baansprakelijk\\b");
+    expect("patronen" in result && result.patronen[1].source).toBe("\\bbelasting\\b");
+  });
+
+  it("OF-operator splitst op ' OF ' en geeft operator OF terug", () => {
+    const result = parseZoekterm("uitstel OF afstel");
+    expect("operator" in result && result.operator).toBe("OF");
+    expect("patronen" in result && result.patronen).toHaveLength(2);
+    expect("patronen" in result && result.patronen[0].source).toBe("\\buitstel\\b");
+    expect("patronen" in result && result.patronen[1].source).toBe("\\bafstel\\b");
+  });
+
+  it("wildcards worden correct doorgegeven via parseZoekterm", () => {
+    const result = parseZoekterm("termijn*");
+    expect("patronen" in result && result.patronen[0].source).toBe("\\btermijn\\w*");
+  });
+
+  it("RegExp-vlag is case-insensitive en globaal", () => {
+    const result = parseZoekterm("termijn");
+    const pat = "patronen" in result ? result.patronen[0] : null;
+    expect(pat?.flags).toContain("g");
+    expect(pat?.flags).toContain("i");
   });
 });
 
@@ -940,6 +987,102 @@ describe("zoekTermInArtikelDom", () => {
     const treffers = zoekTermInArtikelDom(domToestand, /termijn/gi);
     expect(treffers.length).toBeGreaterThan(0);
     expect(treffers.find(t => t.artikelnummer === "9")).toBeDefined();
+  });
+
+  // ── Woordgrens (exacte match via parseZoekterm) ──────────────────────────────
+
+  it("exacte match matcht NIET op substring (woordgrens)", () => {
+    // Artikel 1: alleen 'termijnen' (meervoud); artikel 2: exact 'termijn'
+    const xmlWg = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>betalingstermijnen gelden hier</al></artikel>
+      <artikel><kop><nr>2</nr></kop><al>de termijn bedraagt zes weken</al></artikel>
+    </wettekst></wetgeving>`;
+    const domWg = wetParser.parse(xmlWg) as Record<string, unknown>;
+    const treffers = zoekTermInArtikelDom(domWg, parseZoekterm("termijn"));
+    const nummers = treffers.map(t => t.artikelnummer);
+    expect(nummers).not.toContain("1"); // 'termijnen' is geen exacte match
+    expect(nummers).toContain("2");
+  });
+
+  it("suffix-wildcard matcht ook samengestelde vormen", () => {
+    const xmlWc = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>betalingstermijnen zijn van toepassing</al></artikel>
+      <artikel><kop><nr>2</nr></kop><al>de termijn bedraagt zes weken</al></artikel>
+      <artikel><kop><nr>3</nr></kop><al>niets relevant</al></artikel>
+    </wettekst></wetgeving>`;
+    const domWc = wetParser.parse(xmlWc) as Record<string, unknown>;
+    // termijn* matcht 'termijn' en 'termijnen'; 'betalingstermijnen' heeft geen \b voor 't'
+    const treffers = zoekTermInArtikelDom(domWc, parseZoekterm("termijn*"));
+    const nummers = treffers.map(t => t.artikelnummer);
+    expect(nummers).toContain("2"); // 'termijn' matcht
+    expect(nummers).not.toContain("3");
+  });
+
+  it("prefix-wildcard matcht op woorden die eindigen op de zoekterm", () => {
+    const xmlPfx = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>de betalingstermijn is verstreken</al></artikel>
+      <artikel><kop><nr>2</nr></kop><al>de termijn bedraagt zes weken</al></artikel>
+      <artikel><kop><nr>3</nr></kop><al>termijnoverschrijding leidt tot rente</al></artikel>
+    </wettekst></wetgeving>`;
+    const domPfx = wetParser.parse(xmlPfx) as Record<string, unknown>;
+    // *termijn matcht 'betalingstermijn' en 'termijn' maar NIET 'termijnoverschrijding'
+    const treffers = zoekTermInArtikelDom(domPfx, parseZoekterm("*termijn"));
+    const nummers = treffers.map(t => t.artikelnummer);
+    expect(nummers).toContain("1"); // 'betalingstermijn' eindigt op 'termijn'
+    expect(nummers).toContain("2"); // exact 'termijn'
+    expect(nummers).not.toContain("3"); // 'termijnoverschrijding' begint met termijn, eindigt er niet op
+  });
+
+  // ── EN/OF-operatoren ─────────────────────────────────────────────────────────
+
+  it("EN-operator: matcht alleen artikelen met ALLE termen", () => {
+    const xmlEn = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>aansprakelijkheid voor belasting</al></artikel>
+      <artikel><kop><nr>2</nr></kop><al>alleen aansprakelijkheid hier</al></artikel>
+      <artikel><kop><nr>3</nr></kop><al>alleen belasting hier</al></artikel>
+    </wettekst></wetgeving>`;
+    const domEn = wetParser.parse(xmlEn) as Record<string, unknown>;
+    const treffers = zoekTermInArtikelDom(domEn, parseZoekterm("aansprakelijkheid EN belasting"));
+    const nummers = treffers.map(t => t.artikelnummer);
+    expect(nummers).toContain("1");    // bevat beide
+    expect(nummers).not.toContain("2"); // mist 'belasting'
+    expect(nummers).not.toContain("3"); // mist 'aansprakelijkheid'
+  });
+
+  it("EN-operator: telt treffers van ALLE patronen samen", () => {
+    const xmlEn2 = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>aansprakelijkheid voor belasting en nog meer belasting</al></artikel>
+    </wettekst></wetgeving>`;
+    const domEn2 = wetParser.parse(xmlEn2) as Record<string, unknown>;
+    const treffers = zoekTermInArtikelDom(domEn2, parseZoekterm("aansprakelijkheid EN belasting"));
+    expect(treffers[0].aantalTreffers).toBe(3); // 1× aansprakelijkheid + 2× belasting
+  });
+
+  it("OF-operator: matcht artikelen met MINSTENS ÉÉN term", () => {
+    const xmlOf = `<wetgeving><wettekst>
+      <artikel><kop><nr>1</nr></kop><al>uitstel van betaling</al></artikel>
+      <artikel><kop><nr>2</nr></kop><al>afstel van betaling</al></artikel>
+      <artikel><kop><nr>3</nr></kop><al>niets relevants</al></artikel>
+    </wettekst></wetgeving>`;
+    const domOf = wetParser.parse(xmlOf) as Record<string, unknown>;
+    const treffers = zoekTermInArtikelDom(domOf, parseZoekterm("uitstel OF afstel"));
+    const nummers = treffers.map(t => t.artikelnummer);
+    expect(nummers).toContain("1");
+    expect(nummers).toContain("2");
+    expect(nummers).not.toContain("3");
+  });
+
+  it("EN-operator over meerdere <lid>-elementen: termen in verschillende leden telt als match", () => {
+    const xmlLid = `<wetgeving><wettekst>
+      <artikel><kop><nr>5</nr></kop>
+        <lid><lidnr>1</lidnr><al>de aansprakelijkheid wordt vastgesteld</al></lid>
+        <lid><lidnr>2</lidnr><al>de belasting is verschuldigd</al></lid>
+      </artikel>
+    </wettekst></wetgeving>`;
+    const domLid = wetParser.parse(xmlLid) as Record<string, unknown>;
+    const treffers = zoekTermInArtikelDom(domLid, parseZoekterm("aansprakelijkheid EN belasting"));
+    expect(treffers).toHaveLength(1);
+    expect(treffers[0].artikelnummer).toBe("5");
   });
 });
 

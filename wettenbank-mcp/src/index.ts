@@ -141,10 +141,41 @@ export function escapeerRegex(str: string): string {
 }
 
 export function bouwTermPatroon(zoekterm: string): string {
-  if (zoekterm.endsWith("*")) {
-    return escapeerRegex(zoekterm.slice(0, -1)) + "\\w*";
+  const heeftPrefix = zoekterm.startsWith("*");
+  const heeftSuffix = zoekterm.endsWith("*");
+  const kern = escapeerRegex(zoekterm.replace(/^\*|\*$/g, ""));
+  const pre  = heeftPrefix ? "\\w*" : "\\b";
+  const post = heeftSuffix ? "\\w*" : "\\b";
+  return `${pre}${kern}${post}`;
+}
+
+/**
+ * Invoertype voor zoekTermInArtikelDom.
+ * Een enkele RegExp wordt intern behandeld als OF-zoekopdracht met één patroon.
+ */
+export type ZoekInput =
+  | RegExp
+  | { patronen: RegExp[]; operator: "EN" | "OF" };
+
+/**
+ * Parseert een zoekterm met optionele EN/OF-operatoren naar een ZoekInput.
+ * Elke deelterm wordt via bouwTermPatroon omgezet naar een regex met woordgrenzen en wildcards.
+ * Voorbeeld: "aansprakelijk EN belasting" → operator EN, twee patronen.
+ */
+export function parseZoekterm(zoekterm: string): ZoekInput {
+  if (zoekterm.includes(" EN ")) {
+    return {
+      operator: "EN",
+      patronen: zoekterm.split(" EN ").map(d => new RegExp(bouwTermPatroon(d.trim()), "gi")),
+    };
   }
-  return escapeerRegex(zoekterm);
+  if (zoekterm.includes(" OF ")) {
+    return {
+      operator: "OF",
+      patronen: zoekterm.split(" OF ").map(d => new RegExp(bouwTermPatroon(d.trim()), "gi")),
+    };
+  }
+  return { operator: "OF", patronen: [new RegExp(bouwTermPatroon(zoekterm.trim()), "gi")] };
 }
 
 export function bouwJciUri(bwbId: string, artikel: string, lid?: string): string {
@@ -459,26 +490,34 @@ export interface TermTreffer {
 }
 
 /**
- * Zoekt een term in alle artikel-nodes van de geparsde DOM.
- * Per artikel-node worden alle <al>-teksten doorzocht (binnen lid, lijst, tekst).
- * Geeft een gesorteerde lijst van artikelnummers met het aantal treffers terug.
- * Veel nauwkeuriger dan zoeken in gestripte platte tekst omdat artikel-grenzen
- * uit de XML-structuur komen, niet uit tekstpatronen.
+ * Zoekt een term (of meerdere termen via EN/OF) in alle artikel-nodes van de geparsde DOM.
+ * Accepteert een enkele RegExp (backward-compatible) of een ZoekInput met operator.
+ * - OF: artikel wordt opgenomen als ≥1 patroon matcht (som van alle treffers).
+ * - EN: artikel wordt opgenomen als ALLE patronen minstens één keer voorkomen in dat artikel.
+ * Artikel-grenzen komen uit de XML-structuur, niet uit tekstpatronen.
  */
 export function zoekTermInArtikelDom(
   dom: Record<string, unknown>,
-  patroon: RegExp
+  invoer: ZoekInput
 ): TermTreffer[] {
-  const tellers = new Map<string, { count: number; leden: Set<string> }>();
+  const { patronen, operator } = invoer instanceof RegExp
+    ? { patronen: [invoer], operator: "OF" as const }
+    : invoer;
+
+  const tellers = new Map<string, { count: number; leden: Set<string>; matchedPatterns: Set<number> }>();
 
   function tel(nr: string, tekst: string, lidnr?: string): void {
-    const m = stripXml(tekst).match(patroon);
-    if (m) {
-      const entry = tellers.get(nr) ?? { count: 0, leden: new Set<string>() };
-      entry.count += m.length;
-      if (lidnr != null) entry.leden.add(lidnr);
-      tellers.set(nr, entry);
-    }
+    const clean = stripXml(tekst);
+    patronen.forEach((pat, i) => {
+      const m = clean.match(pat);
+      if (m) {
+        const entry = tellers.get(nr) ?? { count: 0, leden: new Set<string>(), matchedPatterns: new Set<number>() };
+        entry.count += m.length;
+        entry.matchedPatterns.add(i);
+        if (lidnr != null) entry.leden.add(lidnr);
+        tellers.set(nr, entry);
+      }
+    });
   }
 
   // Doorzoekt een <lijst>-node recursief (inclusief geneste sub-lijsten).
@@ -549,6 +588,9 @@ export function zoekTermInArtikelDom(
 
   traverseer(dom);
   return Array.from(tellers.entries())
+    .filter(([, { matchedPatterns }]) =>
+      operator === "EN" ? matchedPatterns.size === patronen.length : matchedPatterns.size > 0
+    )
     .map(([artikelnummer, { count, leden }]) => ({
       artikelnummer,
       aantalTreffers: count,
@@ -724,7 +766,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         "Zoek welke artikelen een begrip bevatten in één Nederlandse wet (één BWB-id per aanroep). " +
         "Voor meerdere wetten: roep deze tool parallel aan per BWB-id. " +
         "Retourneert een lijst van artikelnummers met treffertellingen en directe aanroepvoorbeelden voor wettenbank_artikel. " +
-        "Wildcard: 'termijn*' matcht ook 'termijnen', 'termijnoverschrijding' etc. " +
+        "Wildcards: 'termijn*' (begint met), '*termijn' (eindigt op), '*termijn*' (bevat). " +
+        "Zonder wildcard: exacte woordmatch ('termijn' matcht NIET 'termijnen'). " +
+        "Operatoren: 'aansprakelijk EN belasting' (beide aanwezig), 'uitstel OF afstel' (minstens één). " +
         "Geeft expliciet aan als de term nergens gevonden is. " +
         "Optioneel: peildatum (YYYY-MM-DD) voor een historische versie; default is vandaag.",
       inputSchema: {
@@ -734,7 +778,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           bwbId: { type: "string", description: "BWB-id, bijv. BWBR0004770 (IW 1990)" },
           zoekterm: {
             type: "string",
-            description: "Te zoeken begrip. Wildcard mogelijk: 'termijn*' matcht 'termijnen', 'termijnoverschrijding' etc.",
+            description:
+              "Te zoeken begrip. Zonder wildcard: exacte woordmatch. " +
+              "Wildcards: 'termijn*' (begint met), '*termijn' (eindigt op), '*termijn*' (bevat). " +
+              "Operatoren: 'aansprakelijk EN belasting' (beide aanwezig in artikel), 'uitstel OF afstel' (minstens één).",
           },
           peildatum: { type: "string", description: "Datum YYYY-MM-DD voor historische versie; default is vandaag." },
         },
@@ -851,8 +898,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (meta.versiedatum) versiedatum = meta.versiedatum;
       const header = `${wetNaam} > Versie geldig op: ${versiedatum}`;
 
-      const patroon = new RegExp(bouwTermPatroon(zoekterm), "gi");
-      const treffers = zoekTermInArtikelDom(dom, patroon);
+      const zoekInput = parseZoekterm(zoekterm);
+      const treffers = zoekTermInArtikelDom(dom, zoekInput);
       const totaal = treffers.reduce((s, t) => s + t.aantalTreffers, 0);
 
       if (!treffers.length) {

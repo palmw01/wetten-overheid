@@ -31,9 +31,20 @@ The entire server lives in `src/index.ts`. It exposes three tools:
 
 **Data flow (wettenbank_artikel / wettenbank_zoekterm):** `haalWetstekstOp()` fetches regulation via SRU, then fetches full XML from `repository.officiele-overheidspublicaties.nl/bwb/`. For `wettenbank_artikel`, `extraheerArtikelUitXml()` extracts the article via DOM-traversal; optional `N.M`-notation (`artikel="9.1"`) activates a lid-filter via `parseerArtikelParam()`. Header uses `extraheerDocMetadata()` for citeertitel + versiedatum; `detecteerArtikelStatus()` adds a ⚠️-warning for vervallen articles; `bouwJciUri()` appends the Bronreferentie. For `wettenbank_zoekterm`, `zoekTermInArtikelDom()` groups matches per article node from the XML DOM (not from plain text).
 
-### `wettenbank_zoekterm` — wildcard
+### `wettenbank_zoekterm` — wildcards en operatoren
 
-Zoekterm die eindigt op `*` wordt omgezet naar een regex-suffix `\w*` via `bouwTermPatroon()`: `termijn*` → matcht `termijn`, `termijnen`, `termijnoverschrijding`. Speciale tekens worden vooraf geescapet via `escapeerRegex()`.
+`bouwTermPatroon(zoekterm)` zet een zoekterm om naar een regex-patroon:
+
+| Invoer | Regex | Matcht |
+|--------|-------|--------|
+| `termijn` | `\btermijn\b` | alleen het exacte woord |
+| `termijn*` | `\btermijn\w*` | `termijn`, `termijnen`, `termijnoverschrijding` |
+| `*termijn` | `\w*termijn\b` | `termijn`, `betalingstermijn` |
+| `*termijn*` | `\w*termijn\w*` | alles met `termijn` erin |
+
+`parseZoekterm(zoekterm)` splitst op ` EN ` of ` OF ` en geeft een `ZoekInput` terug met `patronen: RegExp[]` en `operator: "EN"|"OF"`. `zoekTermInArtikelDom` filtert bij EN af op artikelen waar alle patronen minstens één keer voorkomen.
+
+Speciale tekens worden vooraf geescapet via `escapeerRegex()`.
 
 ### XML-schemas als ontwerpbasis
 
