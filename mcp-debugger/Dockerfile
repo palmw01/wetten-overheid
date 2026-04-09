@@ -39,7 +39,7 @@ RUN mkdir -p /app/config /app/logs && chown -R app:app /app
 USER app
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s \
-  CMD curl -sf http://localhost:3000/health || exit 1
+  CMD curl -sf http://127.0.0.1:3000/health || exit 1
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
