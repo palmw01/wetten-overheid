@@ -18,5 +18,5 @@ services:
       - internal
 
 networks:
-  internal:
+  homeinfra_internal:
     external: true
