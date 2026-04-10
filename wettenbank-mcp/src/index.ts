@@ -214,10 +214,15 @@ export function renderAl(raw: string): string {
     /<extref[^>]*\bdoc="([^"]+)"[^>]*>([\s\S]*?)<\/extref>/g,
     (_, doc, inner) => `[${stripXml(inner)}](${doc})`
   );
-  // <intref>tekst</intref>  →  *tekst*  (interne verwijzing, geen URL)
+  // <intref doc="jci...">tekst</intref>  →  [tekst](jci...)  of  *tekst* (geen doc)
   result = result.replace(
-    /<intref[^>]*>([\s\S]*?)<\/intref>/g,
-    (_, inner) => `*${stripXml(inner)}*`
+    /<intref([^>]*)>([\s\S]*?)<\/intref>/g,
+    (_, attrs: string, inner: string) => {
+      const docMatch = attrs.match(/\bdoc="([^"]+)"/);
+      return docMatch
+        ? `[${stripXml(inner)}](${docMatch[1]})`
+        : `*${stripXml(inner)}*`;
+    }
   );
   // <nadruk type="vet">  →  **vet**
   result = result.replace(
