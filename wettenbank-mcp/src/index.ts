@@ -336,7 +336,7 @@ function zoekArtikelInDom(
   }
   // Structurele containers met ancestor-tracking voor nodes met kop
   const structuurContainers = ["boek", "deel", "hoofdstuk", "afdeling", "paragraaf"] as const;
-  const overigeContainers = ["toestand", "wettekst", "wet-besluit", "wetgeving", "circulaire", "tekst"] as const;
+  const overigeContainers = ["toestand", "wettekst", "wet-besluit", "wetgeving", "circulaire", "circulaire-tekst", "tekst"] as const;
   for (const key of [...structuurContainers, ...overigeContainers]) {
     const val = node[key];
     if (!val) continue;
@@ -466,6 +466,12 @@ function formateerArtikelNode(
     const tekst = node.tekst as Record<string, unknown>;
     const als = Array.isArray(tekst.al) ? tekst.al : (tekst.al ? [tekst.al] : []);
     for (const al of als) parts.push(renderAl(getAlText(al)));
+  }
+
+  // Als er geen genummerde leden zijn maar wel inhoud (bijv. circulaire.divisie of artikel met
+  // alleen directe <al>), geef de volledige tekst als één entry zonder lidnummer.
+  if (ledenArray.length === 0 && parts.length > 1) {
+    ledenArray.push({ lid: "", tekst: parts.slice(1).join("\n").trim() });
   }
 
   return { tekst: parts.join("\n").trim(), structuurpad, leden: ledenArray };
@@ -628,7 +634,7 @@ export function zoekTermInArtikelDom(
       }
     }
     for (const key of ["toestand", "boek", "deel", "hoofdstuk", "afdeling", "paragraaf",
-                       "wettekst", "wet-besluit", "wetgeving", "circulaire", "tekst"] as const) {
+                       "wettekst", "wet-besluit", "wetgeving", "circulaire", "circulaire-tekst", "tekst"] as const) {
       const val = (node as Record<string, unknown>)[key];
       if (!val) continue;
       const list = Array.isArray(val) ? val as Record<string, unknown>[] : [val as Record<string, unknown>];
