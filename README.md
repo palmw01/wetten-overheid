@@ -27,8 +27,8 @@ De [`wettenbank-mcp`](./wettenbank-mcp/) server stelt drie tools beschikbaar voo
 | Tool | Omschrijving |
 |------|-------------|
 | `wettenbank_zoek` | Naam → BWB-id + metadata (puur SRU-metadata) |
-| `wettenbank_artikel` | BWB-id + artikelnummer → artikeltekst met structuurcontext; optioneel `peildatum` |
-| `wettenbank_zoekterm` | BWB-id + zoekterm → welke artikelen bevatten de term; wildcard `termijn*` mogelijk |
+| `wettenbank_artikel` | BWB-id + artikelnummer → artikeltekst (`leden`-array) met structuurcontext; optioneel `lid` (lidnummer) en `peildatum` |
+| `wettenbank_zoekterm` | BWB-id + zoekterm → welke artikelen bevatten de term; wildcards en EN/OF-operatoren (AND/OR ook herkend) |
 
 **Geen API-sleutel nodig.** De server koppelt direct aan de publieke SRU-interface van KOOP; alle data is CC-0.
 

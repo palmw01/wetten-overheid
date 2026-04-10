@@ -30,8 +30,8 @@ De Wettenbank MCP-server maakt het mogelijk om **vanuit Claude Code rechtstreeks
 | Tool                   | Doel                                                                 |
 |------------------------|----------------------------------------------------------------------|
 | `wettenbank_zoek`      | Regelingen zoeken op titel, rechtsgebied, ministerie of regelingsoort; retourneert **JSON** met `regelingen`-array; optioneel `peildatum` (standaard vandaag) |
-| `wettenbank_artikel`   | Één specifiek artikel ophalen via BWB-id + artikelnummer; retourneert **JSON** met `tekst`, `leden`, `structuurpad`, `bronreferentie` etc.; optioneel historische versie via `peildatum` |
-| `wettenbank_zoekterm`  | Zoeken welke artikelen een begrip bevatten; retourneert **JSON** met `artikelen`-array; wildcards (`termijn*`, `*termijn`) en EN/OF-operatoren |
+| `wettenbank_artikel`   | Één specifiek artikel ophalen via BWB-id + artikelnummer; retourneert **JSON** met `leden`, `structuurpad`, `bronreferentie` etc.; optioneel `lid` (lidnummer) en `peildatum` (historische versie) |
+| `wettenbank_zoekterm`  | Zoeken welke artikelen een begrip bevatten; retourneert **JSON** met `artikelen`-array; wildcards (`termijn*`, `*termijn`) en EN/OF-operatoren (AND/OR ook herkend) |
 
 ---
 
@@ -132,11 +132,12 @@ Haalt één artikel op uit een regeling via BWB-id en artikelnummer. De response
 
 **Parameters:**
 
-| Parameter   | Type   | Verplicht | Omschrijving                                                               |
-|-------------|--------|:---------:|----------------------------------------------------------------------------|
-| `bwbId`     | string | **ja**    | BWB-id van de regeling, bijv. `BWBR0004770`                                |
-| `artikel`   | string | **ja**    | Artikelnummer, bijv. `"25"` (IW 1990) of `"3:40"` (Awb). Gebruik `"N.M"`-notatie om één lid op te vragen: `"9.1"` haalt artikel 9, lid 1 op.  |
-| `peildatum` | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)               |
+| Parameter   | Type   | Verplicht | Omschrijving                                                                          |
+|-------------|--------|:---------:|---------------------------------------------------------------------------------------|
+| `bwbId`     | string | **ja**    | BWB-id van de regeling, bijv. `BWBR0004770`                                           |
+| `artikel`   | string | **ja**    | Artikelnummer, bijv. `"25"` (IW 1990), `"3:40"` (Awb) of `"25.1"` (Leidraad sub-artikel) |
+| `lid`       | string |           | Lidnummer om één specifiek lid op te vragen, bijv. `"1"`. Leeg laten voor het hele artikel. |
+| `peildatum` | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)                         |
 
 **Gegevensflow:**
 
@@ -145,10 +146,9 @@ Haalt één artikel op uit een regeling via BWB-id en artikelnummer. De response
    → repositoryUrl uit enrichedData
 
 2. GET <repositoryUrl>  (BWB-toestand XML)
-   → extraheerDocMetadata()   citeertitel + versiedatum voor header
-   → parseerArtikelParam()    splits "9.1" → artikelnr="9", lidnr="1"
-   → extraheerArtikelUitXml(rawXml, artikelnr, lidnr?)  [primair: DOM-traversal + lid-filter]
-   → extraheerArtikel(stripXml(rawXml), artikelnr)      [fallback: tekst-regex]
+   → extraheerDocMetadata()                citeertitel + versiedatum voor header
+   → extraheerArtikelUitXml(rawXml, artikel, lid?)  [primair: DOM-traversal + lid-filter]
+   → extraheerArtikel(stripXml(rawXml), artikel)    [fallback: tekst-regex]
    → detecteerArtikelStatus()  ⚠️-waarschuwing bij vervallen artikel
    → bouwJciUri()              Bronreferentie onderaan de output
 ```
@@ -169,13 +169,12 @@ Haalt één artikel op uit een regeling via BWB-id en artikelnummer. De response
     { "lid": "1", "tekst": "9.1  Een belastingaanslag is invorderbaar zes weken na de dagtekening van het aanslagbiljet." },
     { "lid": "2", "tekst": "9.2  In afwijking van het eerste lid is een navorderingsaanslag..." }
   ],
-  "tekst": "Artikel 9 Betalingstermijnen\n9.1  Een belastingaanslag is invorderbaar...",
   "bronreferentie": "jci1.3:c:BWBR0004770&artikel=9",
   "waarschuwing": null
 }
 ```
 
-`citeertitel` en `versiedatum` komen uit de `<citeertitel>` en het `inwerkingtreding`-attribuut in de BWB-toestand XML; bij ontbreken wordt de SRU-metadata gebruikt. `structuurpad` is een lege array `[]` als het artikel geen structuurancestors heeft. `leden` is een array van objecten `{ lid: string, tekst: string }` per genummerd lid; leeg `[]` als het artikel geen genummerde leden heeft. `waarschuwing` bevat een tekst als het artikel de status `"vervallen"` heeft, anders `null`.
+`citeertitel` en `versiedatum` komen uit de `<citeertitel>` en het `inwerkingtreding`-attribuut in de BWB-toestand XML; bij ontbreken wordt de SRU-metadata gebruikt. `structuurpad` is een lege array `[]` als het artikel geen structuurancestors heeft. `leden` is een array van objecten `{ lid: string, tekst: string }` per genummerd lid; leeg `[]` als het artikel geen genummerde leden heeft. Als `lid` als parameter is opgegeven, bevat de response ook het veld `"lid": "<lidnummer>"`. `waarschuwing` bevat een tekst als het artikel de status `"vervallen"` heeft, anders `null`.
 
 Niet-gevonden: `{ "citeertitel": "...", "versiedatum": "...", "bwbId": "...", "artikel": "999", "fout": "Artikel 999 niet gevonden in deze wet." }`
 
@@ -262,7 +261,7 @@ searchRetrieveResponse
 | `formatRegelingen()`        | ja            | Formatteert een `Regeling[]` als markdown                               |
 | `haalWetstekstOp()`         | ja            | Combineert SRU-lookup + repository-download; geeft `formatted`, `inhoud`, `rawXml`, `regeling` terug |
 | `stripXml()`                | ja            | Verwijdert XML-tags, decodeert entities, comprimeert witruimte          |
-| `renderAl()`                | ja            | Zet inline `<al>`-markup om naar Markdown: `<extref>` → link, `<nadruk>` → vet/cursief, dan `stripXml` |
+| `renderAl()`                | ja            | Zet inline `<al>`-markup om naar Markdown: `<extref>` → link, `<intref doc="...">` → link, `<intref>` (geen doc) → cursief, `<nadruk>` → vet/cursief, dan `stripXml` |
 | `getAlText()`               | ja            | Extraheert tekstinhoud van een `<al>`-element; voorkomt `[object Object]` bij `<al>`-nodes met attributen |
 | `parseerArtikelParam()`     | ja            | Splitst `"9.1"` → `{artikelnr:"9", lidnr:"1"}`; Leidraad-subartikelen worden eerst exact opgezocht |
 | `extraheerArtikelUitXml()`  | ja            | DOM-gebaseerde artikel-extractie; retourneert `{ tekst, structuurpad, leden }` of `null` |
@@ -497,7 +496,7 @@ Alle geëxporteerde functies zijn gedekt door unit tests in `src/index.test.ts`:
 | `bouwTermPatroon`                 | Exacte woordgrens; suffix/prefix/infix-wildcard; speciale tekens escapen            |
 | `parseZoekterm`                   | Enkelvoudig; EN-operator (meerdere patronen); OF-operator; wildcard doorgegeven; flags g+i |
 | `stripXml`                        | Tags verwijderen; CDATA uitpakken; entities decoderen; spaties samenvoegen          |
-| `renderAl`                        | `<extref>` → Markdown-link; `<nadruk type="vet">` → `**vet**`; `<intref>` → cursief; onbekende tags weggegooid |
+| `renderAl`                        | `<extref>` → Markdown-link; `<nadruk type="vet">` → `**vet**`; `<intref doc="...">` → Markdown-link; `<intref>` (geen doc) → cursief; onbekende tags weggegooid |
 | `bouwJciUri`                      | Standaard-format; Awb-nummers met dubbele punt; Leidraad-subartikelen               |
 | `extraheerArtikel`                | Artikel op nummer; dubbele punt (Awb); null-fallback; metadata stripping            |
 | `extraheerArtikelUitXml`          | Reguliere wet; Awb (`:` in nr); Leidraad (`circulaire.divisie`); subartikel; `structuurpad`-array; `leden`-array; depth-limit; lege XML |
