@@ -19,21 +19,23 @@ Unit tests staan in `src/index.test.ts` (vitest). Alle geëxporteerde functies z
 
 This is a **Model Context Protocol (MCP) server** that gives Claude Desktop access to Dutch legislation via the public SRU API at `zoekservice.overheid.nl`. No API key required — data is CC-0.
 
-The entire server lives in `src/index.ts`. It exposes three tools:
+The server lives in `src/index.ts` (gateway + business logic). Zod-schemas in `src/shared/schemas.ts`. It exposes three tools:
 
 | Tool | Purpose |
 |------|---------|
 | `wettenbank_zoek` | Search by title, rechtsgebied, ministerie, or regelingsoort — returns JSON with `regelingen` array |
 | `wettenbank_artikel` | Fetch one article by BWB-id + article number (+ optional `lid`) — returns JSON with `citeertitel`, `versiedatum`, `structuurpad`, `leden`, `bronreferentie`, `waarschuwing` |
-| `wettenbank_zoekterm` | Find which articles contain a term — returns JSON with `artikelen` array (artikel, aantalTreffers, leden) |
+| `wettenbank_zoekterm` | Find which articles contain a term — returns JSON with `artikelen` array (artikel, aantalTreffers, leden), plus `isVolledig` and `totaalTreffers` |
 
 **All tools return pure JSON** (no Markdown) serialized as a string in the MCP `text` content block. The LLM parses and formats the data.
 
-**Data flow (wettenbank_zoek):** builds CQL query → `sruRequest()` hits SRU endpoint → XML parsed → `parseRecords()` + `dedupliceerOpBwbId()` → `JSON.stringify({ query, totaal, dubbeleVerwijderd, regelingen })`.
+**Validation:** Every tool handler calls `ZodSchema.safeParse()` on input before any network calls. Output is also validated before serialisation. Errors return `{ "fout": "<message>" }` (backwards-compatible).
 
-**Data flow (wettenbank_artikel):** `haalWetstekstOp()` fetches regulation via SRU + repository. `extraheerArtikelUitXml()` returns `{ tekst, structuurpad, leden }` via DOM-traversal (`formateerArtikelNode` splits context from article text and collects per-lid objects). `artikel` and `lid` are passed as separate parameters — `lid` is forwarded directly as the lid-filter (no N.M-parsing in call logic). `extraheerDocMetadata()` provides citeertitel + versiedatum. `detecteerArtikelStatus()` provides the `waarschuwing`. `bouwJciUri()` provides the `bronreferentie`. All assembled as `JSON.stringify({...})` without a top-level `tekst` field (article content lives exclusively in `leden`).
+**Data flow (wettenbank_zoek):** Zod validates input → builds CQL query → `sruRequest()` hits SRU endpoint → XML parsed → `parseRecords()` + `dedupliceerOpBwbId()` → Zod validates output → `JSON.stringify(...)`.
 
-**Data flow (wettenbank_zoekterm):** `zoekTermInArtikelDom()` groups matches per article node from XML DOM. `parseZoekterm()` handles EN/OF operators (AND/OR accepted as aliases). Returns `JSON.stringify({ wet, versiedatum, bwbId, zoekterm, totaalTreffers, aantalArtikelen, artikelen })`.
+**Data flow (wettenbank_artikel):** Zod validates input → `haalWetstekstOp()` fetches regulation via SRU + repository. `extraheerArtikelUitXml()` returns `{ tekst, structuurpad, leden }` via DOM-traversal. `extraheerDocMetadata()` provides citeertitel + versiedatum. `detecteerArtikelStatus()` provides the `waarschuwing`. `bouwJciUri()` provides the `bronreferentie`. Zod validates output → `JSON.stringify(...)`.
+
+**Data flow (wettenbank_zoekterm):** Zod validates input → `zoekTermInArtikelDom()` groups matches per article node from XML DOM, returns `{ artikelen, isVolledig, totaalTreffers }`. `parseZoekterm()` handles EN/OF operators (AND/OR accepted as aliases). `maxResultaten` parameter limits the output array; `totaalTreffers` reflects the full count (all matching articles, before slice). Zod validates output → `JSON.stringify(...)`.
 
 ### `wettenbank_zoekterm` — wildcards en operatoren
 

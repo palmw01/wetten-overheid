@@ -1,6 +1,6 @@
 # Wettenbank MCP — Documentatie
 
-**Versie:** 2.1.0  
+**Versie:** 3.0.0  
 **Taal:** TypeScript (ESM)  
 **Transportprotocol:** StdIO (MCP)  
 **Databron:** wetten.overheid.nl — publieke SRU-interface (CC-0, geen API-sleutel vereist)
@@ -76,7 +76,8 @@ Claude Code (LLM)
 | Component    | Keuze                                        |
 |--------------|----------------------------------------------|
 | MCP SDK      | `@modelcontextprotocol/sdk` v1.0.0           |
-| XML-parsing  | `fast-xml-parser` v4.3.0                     |
+| XML-parsing  | `fast-xml-parser` v4.3.0 (DOM)              |
+| Validatie    | `zod` (input + output, alle tools)          |
 | Transport    | `StdioServerTransport` (stdin/stdout)        |
 | Taal         | TypeScript 5, ESM modules                   |
 | Testframework| Vitest 2                                     |
@@ -189,10 +190,11 @@ Zoekt welke artikelen een begrip bevatten en retourneert een gesorteerde lijst m
 | Parameter   | Type   | Verplicht | Omschrijving                                                                           |
 |-------------|--------|:---------:|----------------------------------------------------------------------------------------|
 | `bwbId`     | string | **ja**    | BWB-id van de regeling, bijv. `BWBR0004770`                                            |
-| `zoekterm`  | string | **ja**    | Te zoeken begrip. Zonder wildcard: exacte woordmatch. Wildcards: `termijn*` (begint met), `*termijn` (eindigt op), `*termijn*` (bevat). Operatoren: `aansprakelijk EN belasting`, `uitstel OF afstel`. |
-| `peildatum` | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)                          |
+| `zoekterm`      | string |           | Te zoeken begrip. Zonder wildcard: exacte woordmatch. Wildcards: `termijn*` (begint met), `*termijn` (eindigt op), `*termijn*` (bevat). Operatoren: `aansprakelijk EN belasting`, `uitstel OF afstel`. |
+| `peildatum`     | string |           | Historische versie op datum `YYYY-MM-DD` (standaard: vandaag)                          |
+| `maxResultaten` | number |           | Maximum aantal artikelen in de uitvoer (standaard: 10, maximum: 50)                    |
 
-**Zoekstrategie:** DOM-gebaseerd via `zoekTermInArtikelDom()` — de term wordt per artikel-node gezocht in de `<al>`-, `<lid>`- en `<lijst>`-tekst. Geneste `<lijst>`-nodes (sub-lijsten) worden recursief doorzocht. Artikel-grenzen komen uit de XML-structuur, niet uit tekstpatronen.
+**Zoekstrategie:** DOM-gebaseerd via `zoekTermInArtikelDom()` — de term wordt per artikel-node gezocht in de `<al>`-, `<lid>`- en `<lijst>`-tekst. Geneste `<lijst>`-nodes (sub-lijsten) worden recursief doorzocht. Artikel-grenzen komen uit de XML-structuur, niet uit tekstpatronen. Maximaal 100 treffers per artikel en 2000 totaal worden geteld (bescherming bij brede wildcards).
 
 **Resultaatformaat (JSON):**
 
@@ -203,6 +205,7 @@ Zoekt welke artikelen een begrip bevatten en retourneert een gesorteerde lijst m
   "bwbId": "BWBR0004770",
   "zoekterm": "dwangbevel",
   "totaalTreffers": 12,
+  "isVolledig": true,
   "aantalArtikelen": 4,
   "artikelen": [
     { "artikel": "13", "aantalTreffers": 5, "leden": ["1", "3"] },
@@ -211,7 +214,7 @@ Zoekt welke artikelen een begrip bevatten en retourneert een gesorteerde lijst m
 }
 ```
 
-Niet gevonden: zelfde schema met `totaalTreffers: 0` en `artikelen: []`. Wetstekst niet bereikbaar: `fout`-veld aanwezig.
+`isVolledig: true` betekent dat het volledige document gescand is. `totaalTreffers` is de som over alle gevonden artikelen, ook als `maxResultaten` de uitvoer afkapt. Niet gevonden: zelfde schema met `totaalTreffers: 0` en `artikelen: []`. Wetstekst niet bereikbaar: `fout`-veld aanwezig.
 
 ---
 
@@ -252,6 +255,8 @@ searchRetrieveResponse
 ## 5  Interne functies
 
 ### 5.1  Overzicht
+
+De validatielaag (`src/shared/schemas.ts`) bevat Zod-schemas voor alle tool-inputs en outputs. De gateway (`index.ts`) valideert via `safeParse()` — zowel ingaande argumenten als de output vóór serialisatie.
 
 | Functie                     | Exporteerbaar | Doel                                                                    |
 |-----------------------------|:-------------:|-------------------------------------------------------------------------|
@@ -392,7 +397,7 @@ gzd
 
 ## 7  Foutafhandeling
 
-Alle tool-handlers zijn omgeven door een `try/catch`. Alle foutresponses zijn **JSON**:
+Alle tool-handlers zijn omgeven door een `try/catch`. Validatie via Zod vindt vóór de business-logica plaats. Alle foutresponses zijn **JSON**:
 
 ```json
 { "content": [{ "type": "text", "text": "{\"fout\": \"<message>\"}" }], "isError": true }
@@ -402,6 +407,7 @@ Alle tool-handlers zijn omgeven door een `try/catch`. Alle foutresponses zijn **
 
 | Situatie                                | Reactie (JSON-veld)                                                               |
 |-----------------------------------------|-----------------------------------------------------------------------------------|
+| Ongeldige tool-invoer (Zod)             | `{ "fout": "<Zod-foutbericht>" }` — direct, vóór netwerkaanroep                  |
 | Onbekend BWB-id (SRU geeft 0 records)   | `{ "fout": "Geen regeling voor BWB-id: ... Bekende ids: ..." }`                   |
 | Repository niet bereikbaar (HTTP-fout)  | `inhoud = "(Wetstekst niet bereikbaar: <status>)"` — geen crash                   |
 | Netwerkfout bij repository-fetch        | `inhoud = "(Fout bij ophalen wetstekst)"` — geen crash                            |
@@ -410,6 +416,7 @@ Alle tool-handlers zijn omgeven door een `try/catch`. Alle foutresponses zijn **
 | Wetstekst niet beschikbaar (zoekterm)   | `{ "wet": "...", "zoekterm": "...", "fout": "Wetstekst niet beschikbaar" }`       |
 | DOM-parse fout of lege XML              | `extraheerArtikelUitXml` geeft `null` → fallback naar `extraheerArtikel`          |
 | Recursie-diepte > 30                    | `zoekArtikelInDom` stopt en geeft `null` terug (bescherming tegen stack overflow) |
+| Output voldoet niet aan schema          | `{ "fout": "Onverwacht outputformaat" }` + log naar stderr                        |
 
 ---
 
@@ -501,7 +508,10 @@ Alle geëxporteerde functies zijn gedekt door unit tests in `src/index.test.ts`:
 | `extraheerArtikel`                | Artikel op nummer; dubbele punt (Awb); null-fallback; metadata stripping            |
 | `extraheerArtikelUitXml`          | Reguliere wet; Awb (`:` in nr); Leidraad (`circulaire.divisie`); subartikel; `structuurpad`-array; `leden`-array; depth-limit; lege XML |
 | `detecteerArtikelStatus`          | Null bij "geldend"; waarschuwing bij "vervallen"; null bij lege XML                 |
-| `zoekTermInArtikelDom`            | Juist artikel; meerdere treffers; lege array; kruisverwijzing; woordgrens; prefix/suffix-wildcard; EN/OF-operator; `<lid>`-tekst; geneste `<lijst>`-nodes |
+| `zoekTermInArtikelDom`            | Juist artikel; meerdere treffers; lege array; kruisverwijzing; woordgrens; prefix/suffix-wildcard; EN/OF-operator; `<lid>`-tekst; geneste `<lijst>`-nodes; `isVolledig`; `totaalTreffers`; `maxResultaten` |
+| `ZoekInputSchema` (Zod)           | Minimaal één criterium; peildatum-format; maxResultaten-bereik; default-waarden   |
+| `ZoektermInputSchema` (Zod)       | Verplichte velden; lege string; maxResultaten-default                             |
+| `ArtikelInputSchema` (Zod)        | Verplichte velden; null-lid; lege artikel-string                                  |
 | `extraheerDocMetadata`            | Citeertitel + versiedatum (`inwerkingtreding`-attribuut) uit `<toestand>`-structuur; lege strings als structuur ontbreekt |
 | `parseRecords`                    | Leeg resultaat; enkelvoudig record; meerdere rechtsgebieden; twee records           |
 | `formatRegelingen`                | Lege lijst; BWB-id/titel aanwezig; oplopende nummering; titel-fallback              |

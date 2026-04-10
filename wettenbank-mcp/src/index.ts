@@ -13,6 +13,14 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { XMLParser } from "fast-xml-parser";
 import { fileURLToPath } from "node:url";
+import {
+  ZoekInputSchema,
+  ZoektermInputSchema,
+  ArtikelInputSchema,
+  ZoekOutputSchema,
+  ZoektermOutputSchema,
+  ArtikelOutputSchema,
+} from "./shared/schemas.js";
 
 const SRU_BASE = "https://zoekservice.overheid.nl/sru/Search";
 const REPO_BASE = "https://repository.officiele-overheidspublicaties.nl/bwb";
@@ -506,10 +514,22 @@ export function detecteerArtikelStatus(rawXml: string, artikelnummer: string): s
 
 // ── Zoekterm via DOM (wettenbank_zoekterm) ────────────────────────────────────
 
+// Bescherming tegen explosieve zoektermen (bijv. *term* op groot document)
+const MAX_TREFFERS_PER_ARTIKEL = 100;
+const MAX_TREFFERS_TOTAAL = 2000;
+
 export interface TermTreffer {
   artikelnummer: string;
   aantalTreffers: number;
   leden: string[];
+}
+
+export interface ZoekTermResultaat {
+  artikelen: TermTreffer[];
+  /** true = volledige scan uitgevoerd; false = gestopt bij maxResultaten (toekomstig: SAX) */
+  isVolledig: boolean;
+  /** Som van alle treffers over alle gevonden artikelen (null wanneer isVolledig=false) */
+  totaalTreffers: number | null;
 }
 
 /**
@@ -521,21 +541,28 @@ export interface TermTreffer {
  */
 export function zoekTermInArtikelDom(
   dom: Record<string, unknown>,
-  invoer: ZoekInput
-): TermTreffer[] {
+  invoer: ZoekInput,
+  maxResultaten = 10
+): ZoekTermResultaat {
   const { patronen, operator } = invoer instanceof RegExp
     ? { patronen: [invoer], operator: "OF" as const }
     : invoer;
 
   const tellers = new Map<string, { count: number; leden: Set<string>; matchedPatterns: Set<number> }>();
+  let totaalTreffersTeller = 0;
 
   function tel(nr: string, tekst: string, lidnr?: string): void {
+    if (totaalTreffersTeller >= MAX_TREFFERS_TOTAAL) return;
+    const entry = tellers.get(nr) ?? { count: 0, leden: new Set<string>(), matchedPatterns: new Set<number>() };
+    if (entry.count >= MAX_TREFFERS_PER_ARTIKEL) return;
+
     const clean = stripXml(tekst);
     patronen.forEach((pat, i) => {
       const m = clean.match(pat);
       if (m) {
-        const entry = tellers.get(nr) ?? { count: 0, leden: new Set<string>(), matchedPatterns: new Set<number>() };
-        entry.count += m.length;
+        const toAdd = Math.min(m.length, MAX_TREFFERS_PER_ARTIKEL - entry.count);
+        entry.count += toAdd;
+        totaalTreffersTeller += toAdd;
         entry.matchedPatterns.add(i);
         if (lidnr != null) entry.leden.add(lidnr);
         tellers.set(nr, entry);
@@ -610,7 +637,8 @@ export function zoekTermInArtikelDom(
   }
 
   traverseer(dom);
-  return Array.from(tellers.entries())
+
+  const alleArtikelen = Array.from(tellers.entries())
     .filter(([, { matchedPatterns }]) =>
       operator === "EN" ? matchedPatterns.size === patronen.length : matchedPatterns.size > 0
     )
@@ -624,6 +652,15 @@ export function zoekTermInArtikelDom(
       if (!isNaN(nA) && !isNaN(nB)) return nA - nB;
       return a.artikelnummer.localeCompare(b.artikelnummer);
     });
+
+  // Totaal over alle gevonden artikelen (vóór maxResultaten-afkap)
+  const totaalTreffers = alleArtikelen.reduce((s, t) => s + t.aantalTreffers, 0);
+  // DOM scant altijd het volledige document; isVolledig is altijd true
+  // (bij toekomstige SAX-implementatie kan dit false worden bij early exit)
+  const isVolledig = true;
+  const artikelen = alleArtikelen.slice(0, maxResultaten);
+
+  return { artikelen, isVolledig, totaalTreffers };
 }
 
 /**
@@ -809,6 +846,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
               "Operatoren: 'aansprakelijk EN belasting' of 'aansprakelijk AND belasting' (beide aanwezig in artikel), 'uitstel OF afstel' of 'uitstel OR afstel' (minstens één).",
           },
           peildatum: { type: "string", description: "Datum YYYY-MM-DD voor historische versie; default is vandaag." },
+          maxResultaten: {
+            type: "number",
+            description: "Maximum aantal artikelen in de uitvoer (standaard: 10, maximum: 50). Gebruik een hogere waarde om meer vindplaatsen te zien.",
+          },
         },
       },
     },
@@ -819,38 +860,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   try {
     if (name === "wettenbank_zoek") {
-      const { titel, rechtsgebied, ministerie, regelingsoort, maxResultaten = 10, peildatum } =
-        args as Record<string, string | number>;
-      const datum = typeof peildatum === "string" && peildatum ? peildatum : vandaag();
+      const parsedInput = ZoekInputSchema.safeParse(args);
+      if (!parsedInput.success) {
+        return { content: [{ type: "text", text: JSON.stringify({ fout: parsedInput.error.issues[0].message }) }] };
+      }
+      const { titel, rechtsgebied, ministerie, regelingsoort, maxResultaten, peildatum } = parsedInput.data;
 
       const delen: string[] = [];
       if (titel) delen.push(`overheidbwb.titel any "${titel}"`);
       if (rechtsgebied) delen.push(`overheidbwb.rechtsgebied == "${rechtsgebied}"`);
       if (ministerie) delen.push(`overheid.authority == "${ministerie}"`);
       if (regelingsoort) delen.push(`dcterms.type == "${regelingsoort}"`);
-      if (!delen.length)
-        return { content: [{ type: "text", text: JSON.stringify({ fout: "Geef minimaal één zoekcriterium op." }) }] };
-
-      delen.push(`overheidbwb.geldigheidsdatum==${datum}`);
+      delen.push(`overheidbwb.geldigheidsdatum==${peildatum}`);
       const query = delen.join(" and ");
-      const xml = await sruRequest(query, Math.min(Number(maxResultaten), 50));
+      const xml = await sruRequest(query, maxResultaten);
       const ruw = parseRecords(xml);
       const lijst = dedupliceerOpBwbId(ruw);
-      return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            query,
-            totaal: lijst.length,
-            dubbeleVerwijderd: ruw.length - lijst.length,
-            regelingen: lijst,
-          }),
-        }],
-      };
+
+      const result = { query, totaal: lijst.length, dubbeleVerwijderd: ruw.length - lijst.length, regelingen: lijst };
+      const parsedOutput = ZoekOutputSchema.safeParse(result);
+      if (!parsedOutput.success) {
+        console.error("wettenbank_zoek output validatiefout:", parsedOutput.error);
+        return { content: [{ type: "text", text: JSON.stringify({ fout: "Onverwacht outputformaat" }) }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(parsedOutput.data) }] };
     }
 
     if (name === "wettenbank_artikel") {
-      const { bwbId, artikel, lid, peildatum } = args as Record<string, string>;
+      const parsedInput = ArtikelInputSchema.safeParse(args);
+      if (!parsedInput.success) {
+        return { content: [{ type: "text", text: JSON.stringify({ fout: parsedInput.error.issues[0].message }) }] };
+      }
+      const { bwbId, artikel, lid, peildatum } = parsedInput.data;
       const lidnr: string | null = lid?.trim() || null;
       const { regeling, rawXml, inhoud } = await haalWetstekstOp(bwbId, peildatum);
 
@@ -881,22 +922,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       if (artikelTekst) {
         const statusWaarschuwing = detecteerArtikelStatus(rawXml, artikel);
-        return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              citeertitel: wetNaam,
-              versiedatum,
-              bwbId,
-              artikel,
-              ...(lidnr !== null && { lid: lidnr }),
-              structuurpad,
-              leden,
-              bronreferentie: jci,
-              waarschuwing: statusWaarschuwing ?? null,
-            }),
-          }],
+        const artikelResult = {
+          citeertitel: wetNaam,
+          versiedatum,
+          bwbId,
+          artikel,
+          ...(lidnr !== null && { lid: lidnr }),
+          structuurpad,
+          leden,
+          bronreferentie: jci,
+          waarschuwing: statusWaarschuwing ?? null,
         };
+        const parsedOutput = ArtikelOutputSchema.safeParse(artikelResult);
+        if (!parsedOutput.success) {
+          console.error("wettenbank_artikel output validatiefout:", parsedOutput.error);
+          return { content: [{ type: "text", text: JSON.stringify({ fout: "Onverwacht outputformaat" }) }] };
+        }
+        return { content: [{ type: "text", text: JSON.stringify(parsedOutput.data) }] };
       }
       const artikelLabel = lidnr !== null ? `${artikel} lid ${lidnr}` : artikel;
       return {
@@ -915,7 +957,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     if (name === "wettenbank_zoekterm") {
-      const { bwbId, zoekterm, peildatum } = args as Record<string, string>;
+      const parsedInput = ZoektermInputSchema.safeParse(args);
+      if (!parsedInput.success) {
+        return { content: [{ type: "text", text: JSON.stringify({ fout: parsedInput.error.issues[0].message }) }] };
+      }
+      const { bwbId, zoekterm, peildatum, maxResultaten } = parsedInput.data;
       const { rawXml, regeling } = await haalWetstekstOp(bwbId, peildatum);
 
       // Haal citeertitel + versiedatum uit DOM; valt terug op SRU-metadata
@@ -936,27 +982,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       if (meta.versiedatum) versiedatum = meta.versiedatum;
 
       const zoekInput = parseZoekterm(zoekterm);
-      const treffers = zoekTermInArtikelDom(dom, zoekInput);
-      const totaal = treffers.reduce((s, t) => s + t.aantalTreffers, 0);
+      const { artikelen, isVolledig, totaalTreffers } = zoekTermInArtikelDom(dom, zoekInput, maxResultaten);
 
-      return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            wet: wetNaam,
-            versiedatum,
-            bwbId,
-            zoekterm,
-            totaalTreffers: totaal,
-            aantalArtikelen: treffers.length,
-            artikelen: treffers.map(t => ({
-              artikel: t.artikelnummer,
-              aantalTreffers: t.aantalTreffers,
-              leden: t.leden,
-            })),
-          }),
-        }],
+      const result = {
+        wet: wetNaam,
+        versiedatum,
+        bwbId,
+        zoekterm,
+        totaalTreffers,
+        isVolledig,
+        aantalArtikelen: artikelen.length,
+        artikelen: artikelen.map(t => ({
+          artikel: t.artikelnummer,
+          aantalTreffers: t.aantalTreffers,
+          leden: t.leden,
+        })),
       };
+      const parsedOutput = ZoektermOutputSchema.safeParse(result);
+      if (!parsedOutput.success) {
+        console.error("wettenbank_zoekterm output validatiefout:", parsedOutput.error);
+        return { content: [{ type: "text", text: JSON.stringify({ fout: "Onverwacht outputformaat" }) }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(parsedOutput.data) }] };
     }
 
     return { content: [{ type: "text", text: JSON.stringify({ fout: `Onbekende tool: ${name}` }) }], isError: true };

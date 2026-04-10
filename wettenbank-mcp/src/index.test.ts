@@ -903,7 +903,7 @@ describe("zoekTermInArtikelDom", () => {
   const dom = wetParser.parse(xml) as Record<string, unknown>;
 
   it("vindt de term in de juiste artikelen", () => {
-    const treffers = zoekTermInArtikelDom(dom, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom, /termijn/gi);
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).toContain("1");
     expect(nummers).toContain("2");
@@ -911,17 +911,17 @@ describe("zoekTermInArtikelDom", () => {
   });
 
   it("telt meerdere treffers in één artikel correct", () => {
-    const treffers = zoekTermInArtikelDom(dom, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom, /termijn/gi);
     const art2 = treffers.find(t => t.artikelnummer === "2");
     expect(art2?.aantalTreffers).toBe(2);
   });
 
   it("retourneert lege array als term nergens voorkomt", () => {
-    expect(zoekTermInArtikelDom(dom, /xyzzy/gi)).toHaveLength(0);
+    expect(zoekTermInArtikelDom(dom, /xyzzy/gi).artikelen).toHaveLength(0);
   });
 
   it("sorteert resultaten numeriek op artikelnummer", () => {
-    const treffers = zoekTermInArtikelDom(dom, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom, /termijn/gi);
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers[0]).toBe("1");
     expect(nummers[1]).toBe("2");
@@ -935,7 +935,7 @@ describe("zoekTermInArtikelDom", () => {
       </artikel>
     </wettekst></wetgeving>`;
     const dom2 = wetParser.parse(xml2) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(dom2, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom2, /termijn/gi);
     expect(treffers).toHaveLength(1);
     expect(treffers[0].artikelnummer).toBe("5");
     expect(treffers[0].aantalTreffers).toBe(1);
@@ -950,12 +950,12 @@ describe("zoekTermInArtikelDom", () => {
       </artikel>
     </wettekst></wetgeving>`;
     const dom2 = wetParser.parse(xml2) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(dom2, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom2, /termijn/gi);
     expect(treffers[0].leden).toEqual(["1", "3"]);
   });
 
   it("geeft lege leden-array voor artikel zonder <lid>-structuur", () => {
-    const treffers = zoekTermInArtikelDom(dom, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom, /termijn/gi);
     const art1 = treffers.find(t => t.artikelnummer === "1");
     expect(art1?.leden).toEqual([]);
   });
@@ -967,7 +967,7 @@ describe("zoekTermInArtikelDom", () => {
       <artikel><kop><nr>9</nr></kop><al>dit is artikel 9 zelf</al></artikel>
     </wettekst></wetgeving>`;
     const dom3 = wetParser.parse(xml3) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(dom3, /artikel 9/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom3, /artikel 9/gi);
     const art5 = treffers.find(t => t.artikelnummer === "5");
     const art9 = treffers.find(t => t.artikelnummer === "9");
     expect(art5?.aantalTreffers).toBe(1);
@@ -975,7 +975,7 @@ describe("zoekTermInArtikelDom", () => {
   });
 
   it("ondersteunt wildcard-patroon via bouwTermPatroon", () => {
-    const treffers = zoekTermInArtikelDom(dom, new RegExp(bouwTermPatroon("termijn*"), "gi"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(dom, new RegExp(bouwTermPatroon("termijn*"), "gi"));
     expect(treffers.length).toBeGreaterThan(0);
   });
 
@@ -993,7 +993,7 @@ describe("zoekTermInArtikelDom", () => {
       </wettekst></wet-besluit></wetgeving>
     </toestand>`;
     const domToestand = wetParser.parse(xmlToestand) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domToestand, /termijn/gi);
+    const { artikelen: treffers } = zoekTermInArtikelDom(domToestand, /termijn/gi);
     expect(treffers.length).toBeGreaterThan(0);
     expect(treffers.find(t => t.artikelnummer === "9")).toBeDefined();
   });
@@ -1007,7 +1007,7 @@ describe("zoekTermInArtikelDom", () => {
       <artikel><kop><nr>2</nr></kop><al>de termijn bedraagt zes weken</al></artikel>
     </wettekst></wetgeving>`;
     const domWg = wetParser.parse(xmlWg) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domWg, parseZoekterm("termijn"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domWg, parseZoekterm("termijn"));
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).not.toContain("1"); // 'termijnen' is geen exacte match
     expect(nummers).toContain("2");
@@ -1021,7 +1021,7 @@ describe("zoekTermInArtikelDom", () => {
     </wettekst></wetgeving>`;
     const domWc = wetParser.parse(xmlWc) as Record<string, unknown>;
     // termijn* matcht 'termijn' en 'termijnen'; 'betalingstermijnen' heeft geen \b voor 't'
-    const treffers = zoekTermInArtikelDom(domWc, parseZoekterm("termijn*"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domWc, parseZoekterm("termijn*"));
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).toContain("2"); // 'termijn' matcht
     expect(nummers).not.toContain("3");
@@ -1035,7 +1035,7 @@ describe("zoekTermInArtikelDom", () => {
     </wettekst></wetgeving>`;
     const domPfx = wetParser.parse(xmlPfx) as Record<string, unknown>;
     // *termijn matcht 'betalingstermijn' en 'termijn' maar NIET 'termijnoverschrijding'
-    const treffers = zoekTermInArtikelDom(domPfx, parseZoekterm("*termijn"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domPfx, parseZoekterm("*termijn"));
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).toContain("1"); // 'betalingstermijn' eindigt op 'termijn'
     expect(nummers).toContain("2"); // exact 'termijn'
@@ -1051,7 +1051,7 @@ describe("zoekTermInArtikelDom", () => {
       <artikel><kop><nr>3</nr></kop><al>alleen belasting hier</al></artikel>
     </wettekst></wetgeving>`;
     const domEn = wetParser.parse(xmlEn) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domEn, parseZoekterm("aansprakelijkheid EN belasting"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domEn, parseZoekterm("aansprakelijkheid EN belasting"));
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).toContain("1");    // bevat beide
     expect(nummers).not.toContain("2"); // mist 'belasting'
@@ -1063,7 +1063,7 @@ describe("zoekTermInArtikelDom", () => {
       <artikel><kop><nr>1</nr></kop><al>aansprakelijkheid voor belasting en nog meer belasting</al></artikel>
     </wettekst></wetgeving>`;
     const domEn2 = wetParser.parse(xmlEn2) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domEn2, parseZoekterm("aansprakelijkheid EN belasting"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domEn2, parseZoekterm("aansprakelijkheid EN belasting"));
     expect(treffers[0].aantalTreffers).toBe(3); // 1× aansprakelijkheid + 2× belasting
   });
 
@@ -1074,7 +1074,7 @@ describe("zoekTermInArtikelDom", () => {
       <artikel><kop><nr>3</nr></kop><al>niets relevants</al></artikel>
     </wettekst></wetgeving>`;
     const domOf = wetParser.parse(xmlOf) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domOf, parseZoekterm("uitstel OF afstel"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domOf, parseZoekterm("uitstel OF afstel"));
     const nummers = treffers.map(t => t.artikelnummer);
     expect(nummers).toContain("1");
     expect(nummers).toContain("2");
@@ -1089,9 +1089,125 @@ describe("zoekTermInArtikelDom", () => {
       </artikel>
     </wettekst></wetgeving>`;
     const domLid = wetParser.parse(xmlLid) as Record<string, unknown>;
-    const treffers = zoekTermInArtikelDom(domLid, parseZoekterm("aansprakelijkheid EN belasting"));
+    const { artikelen: treffers } = zoekTermInArtikelDom(domLid, parseZoekterm("aansprakelijkheid EN belasting"));
     expect(treffers).toHaveLength(1);
     expect(treffers[0].artikelnummer).toBe("5");
+  });
+
+  // ── isVolledig / totaalTreffers / maxResultaten ───────────────────────────────
+
+  const xmlVeel = `<wetgeving><wettekst>
+    <artikel><kop><nr>1</nr></kop><al>termijn</al></artikel>
+    <artikel><kop><nr>2</nr></kop><al>termijn termijn</al></artikel>
+    <artikel><kop><nr>3</nr></kop><al>termijn</al></artikel>
+    <artikel><kop><nr>4</nr></kop><al>termijn</al></artikel>
+    <artikel><kop><nr>5</nr></kop><al>niets hier</al></artikel>
+  </wettekst></wetgeving>`;
+  const domVeel = wetParser.parse(xmlVeel) as Record<string, unknown>;
+
+  it("isVolledig is altijd true bij DOM-parsing (volledige scan)", () => {
+    const result = zoekTermInArtikelDom(domVeel, parseZoekterm("termijn"));
+    expect(result.isVolledig).toBe(true);
+  });
+
+  it("totaalTreffers telt alle treffers over alle gevonden artikelen", () => {
+    const result = zoekTermInArtikelDom(domVeel, parseZoekterm("termijn"));
+    // art1=1, art2=2, art3=1, art4=1 → totaal 5
+    expect(result.totaalTreffers).toBe(5);
+  });
+
+  it("maxResultaten beperkt de uitvoer maar totaalTreffers geldt voor alle gevonden artikelen", () => {
+    const result = zoekTermInArtikelDom(domVeel, parseZoekterm("termijn"), 2);
+    expect(result.artikelen).toHaveLength(2);
+    expect(result.totaalTreffers).toBe(5); // totaal van ALLE 4 gevonden artikelen
+    expect(result.isVolledig).toBe(true);
+  });
+
+  it("maxResultaten=1 geeft eerste artikel terug", () => {
+    const result = zoekTermInArtikelDom(domVeel, parseZoekterm("termijn"), 1);
+    expect(result.artikelen).toHaveLength(1);
+    expect(result.artikelen[0].artikelnummer).toBe("1");
+  });
+
+  it("geen treffers: totaalTreffers=0, artikelen leeg, isVolledig=true", () => {
+    const result = zoekTermInArtikelDom(domVeel, parseZoekterm("xyzzy"));
+    expect(result.artikelen).toHaveLength(0);
+    expect(result.totaalTreffers).toBe(0);
+    expect(result.isVolledig).toBe(true);
+  });
+});
+
+// ── Zod-schema validatie ─────────────────────────────────────────────────────
+
+import { ZoekInputSchema, ZoektermInputSchema, ArtikelInputSchema } from "./shared/schemas.js";
+
+describe("ZoekInputSchema", () => {
+  it("slaagt bij geldige invoer met één criterium", () => {
+    const result = ZoekInputSchema.safeParse({ titel: "Invorderingswet" });
+    expect(result.success).toBe(true);
+  });
+
+  it("vult peildatum en maxResultaten aan met defaults", () => {
+    const result = ZoekInputSchema.safeParse({ titel: "Invorderingswet" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.maxResultaten).toBe(10);
+      expect(result.data.peildatum).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
+  it("faalt zonder zoekcriterium", () => {
+    const result = ZoekInputSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("faalt bij ongeldige peildatum", () => {
+    const result = ZoekInputSchema.safeParse({ titel: "Test", peildatum: "niet-een-datum" });
+    expect(result.success).toBe(false);
+  });
+
+  it("faalt bij maxResultaten buiten bereik", () => {
+    const result = ZoekInputSchema.safeParse({ titel: "Test", maxResultaten: 100 });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("ZoektermInputSchema", () => {
+  it("slaagt bij geldige invoer", () => {
+    const result = ZoektermInputSchema.safeParse({ bwbId: "BWBR0004770", zoekterm: "termijn" });
+    expect(result.success).toBe(true);
+  });
+
+  it("vult maxResultaten aan met default 10", () => {
+    const result = ZoektermInputSchema.safeParse({ bwbId: "BWBR0004770", zoekterm: "termijn" });
+    expect(result.success && result.data.maxResultaten).toBe(10);
+  });
+
+  it("faalt bij lege bwbId", () => {
+    const result = ZoektermInputSchema.safeParse({ bwbId: "", zoekterm: "termijn" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepteert maxResultaten tot 50", () => {
+    const result = ZoektermInputSchema.safeParse({ bwbId: "BWBR0004770", zoekterm: "termijn", maxResultaten: 50 });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("ArtikelInputSchema", () => {
+  it("slaagt bij geldige invoer", () => {
+    const result = ArtikelInputSchema.safeParse({ bwbId: "BWBR0004770", artikel: "25" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepteert null als lid-waarde", () => {
+    const result = ArtikelInputSchema.safeParse({ bwbId: "BWBR0004770", artikel: "25", lid: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("faalt bij lege artikel-string", () => {
+    const result = ArtikelInputSchema.safeParse({ bwbId: "BWBR0004770", artikel: "" });
+    expect(result.success).toBe(false);
   });
 });
 
