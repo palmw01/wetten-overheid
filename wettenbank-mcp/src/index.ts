@@ -775,9 +775,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           bwbId: { type: "string", description: "BWB-id, bijv. BWBR0004770 (IW 1990)" },
           artikel: {
             type: "string",
-            description:
-              "Artikelnummer, bijv. '25' (IW 1990) of '3:40' (Awb). " +
-              "Gebruik 'N.M'-notatie om één lid op te vragen: '9.1' haalt artikel 9, lid 1 op.",
+            description: "Artikelnummer, bijv. '25' (IW 1990), '3:40' (Awb) of '25.1' (Leidraad sub-artikel).",
+          },
+          lid: {
+            type: "string",
+            description: "Lidnummer om één specifiek lid op te vragen, bijv. '1'. Leeg laten voor het hele artikel.",
           },
           peildatum: { type: "string", description: "Datum YYYY-MM-DD voor historische versie; default is vandaag." },
         },
@@ -848,8 +850,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     if (name === "wettenbank_artikel") {
-      const { bwbId, artikel, peildatum } = args as Record<string, string>;
-      const { artikelnr, lidnr } = parseerArtikelParam(artikel);
+      const { bwbId, artikel, lid, peildatum } = args as Record<string, string>;
+      const lidnr: string | null = lid?.trim() || null;
       const { regeling, rawXml, inhoud } = await haalWetstekstOp(bwbId, peildatum);
 
       // Haal citeertitel + inwerkingtredingsdatum uit DOM; valt terug op SRU-metadata
@@ -861,22 +863,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (meta.citeertitel) wetNaam = meta.citeertitel;
         if (meta.versiedatum) versiedatum = meta.versiedatum;
       }
-      // Ophaalstrategie bij N.M-notatie:
-      // 1. Probeer het volledige artikelnummer exact (Leidraad: "25.1" is een eigen sub-artikel)
-      // 2. Als niet gevonden én er was een punt: probeer artikel N met lid-filter M
-      let artikelResultaat: { tekst: string; structuurpad: string[]; leden: { lid: string; tekst: string }[] } | null = null;
-      let gebruiktArtikel = artikel;
-      let gebruiktLid: string | null = null;
 
+      let artikelResultaat: { tekst: string; structuurpad: string[]; leden: { lid: string; tekst: string }[] } | null = null;
       if (rawXml) {
-        artikelResultaat = extraheerArtikelUitXml(rawXml, artikel);
-        if (!artikelResultaat && lidnr !== null) {
-          artikelResultaat = extraheerArtikelUitXml(rawXml, artikelnr, lidnr);
-          if (artikelResultaat) {
-            gebruiktArtikel = artikelnr;
-            gebruiktLid = lidnr;
-          }
-        }
+        artikelResultaat = extraheerArtikelUitXml(rawXml, artikel, lidnr ?? undefined);
       }
 
       // Fallback naar tekstgebaseerde extractie (geen lid-filter of structuurpad beschikbaar)
@@ -884,14 +874,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const structuurpad: string[] = artikelResultaat?.structuurpad ?? [];
       const leden: { lid: string; tekst: string }[] = artikelResultaat?.leden ?? [];
       if (!artikelTekst) {
-        artikelTekst = extraheerArtikel(inhoud, artikel) ?? (lidnr !== null ? extraheerArtikel(inhoud, artikelnr) : null);
-        if (artikelTekst && lidnr !== null) gebruiktArtikel = artikelnr;
+        artikelTekst = extraheerArtikel(inhoud, artikel);
       }
 
-      const jci = bouwJciUri(bwbId, gebruiktArtikel, gebruiktLid ?? undefined);
+      const jci = bouwJciUri(bwbId, artikel, lidnr ?? undefined);
 
       if (artikelTekst) {
-        const statusWaarschuwing = detecteerArtikelStatus(rawXml, gebruiktArtikel);
+        const statusWaarschuwing = detecteerArtikelStatus(rawXml, artikel);
         return {
           content: [{
             type: "text",
@@ -899,7 +888,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               citeertitel: wetNaam,
               versiedatum,
               bwbId,
-              artikel: gebruiktArtikel,
+              artikel,
+              ...(lidnr !== null && { lid: lidnr }),
               structuurpad,
               leden,
               bronreferentie: jci,
@@ -908,6 +898,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }],
         };
       }
+      const artikelLabel = lidnr !== null ? `${artikel} lid ${lidnr}` : artikel;
       return {
         content: [{
           type: "text",
@@ -916,7 +907,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             versiedatum,
             bwbId,
             artikel,
-            fout: `Artikel ${artikel} niet gevonden in deze wet.`,
+            ...(lidnr !== null && { lid: lidnr }),
+            fout: `Artikel ${artikelLabel} niet gevonden in deze wet.`,
           }),
         }],
       };
